@@ -80,7 +80,7 @@ setup(
     install_requires=[
         'msrestazure~=0.4.7',
         'azure-common~=1.1.5',
-        'cryptography>=2.4.1',
+        'cryptography>=2.1.4',
         'requests>=2.18.4'
     ],
     cmdclass=cmdclass
