@@ -1,28 +1,11 @@
 from ..algorithm import Algorithm, AuthenticatedSymmetricEncryptionAlgorithm
 from ..transform import AuthenticatedCryptoTransform
+from .._internal import _int_to_bigendian_8_bytes
 from abc import abstractmethod
 import codecs
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding, hashes, hmac
-
-
-def _int_to_bytes(i):
-    h = hex(i)
-    if len(h) > 1 and h[0:2] == '0x':
-        h = h[2:]
-    # need to strip L in python 2.x
-    h = h.strip('L')
-    if len(h) % 2:
-        h = '0' + h
-    return codecs.decode(h, 'hex')
-
-
-def _int_to_bigendian_8_bytes(i):
-    b = _int_to_bytes(i)
-    if len(b) < 8:
-        b = (b'\0' * (8 - len(b))) + b
-    return b
 
 
 class _AesCbcHmacCryptoTransform(AuthenticatedCryptoTransform):

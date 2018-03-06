@@ -162,7 +162,7 @@ class RsaKey(Key):
             raise NotImplementedError('The current RsaKey does not support decrypt')
 
         algorithm = self._get_algorithm('decrypt', **kwargs)
-        decryptor = algorithm.create_encryptor(self._rsa_impl)
+        decryptor = algorithm.create_decryptor(self._rsa_impl)
         return decryptor.transform(cipher_text, **kwargs)
 
     def sign(self, data, **kwargs):
@@ -177,6 +177,19 @@ class RsaKey(Key):
         algorithm = self._get_algorithm('verify', **kwargs)
         signer = algorithm.create_signature_transform(self._rsa_impl)
         return signer.verify(signature, data)
+
+    def wrap_key(self, key, **kwargs):
+        algorithm = self._get_algorithm('wrapKey', **kwargs)
+        encryptor = algorithm.create_encryptor(self._rsa_impl)
+        return encryptor.transform(key, **kwargs)
+
+    def unwrap_key(self, encrypted_key, **kwargs):
+        if not self.is_private_key():
+            raise NotImplementedError('The current RsaKey does not support unwrap')
+
+        algorithm = self._get_algorithm('unwrapKey', **kwargs)
+        decryptor = algorithm.create_decryptor(self._rsa_impl)
+        return decryptor.transform(encrypted_key, **kwargs)
 
     def is_private_key(self):
         return isinstance(self._rsa_impl, RSAPrivateKey)

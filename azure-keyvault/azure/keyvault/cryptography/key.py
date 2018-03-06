@@ -64,8 +64,8 @@ class Key(with_metaclass(ABCMeta, object)):
         default_algorithm, supported_alogrithms = {
             'encrypt': (self.default_encryption_algorithm, self.supported_encryption_algorithms),
             'decrypt': (self.default_encryption_algorithm, self.supported_encryption_algorithms),
-            'wrapKey': (self.default_key_wrap_algorithm, self._supported_key_wrap_algorithms),
-            'unwrapKey': (self.default_key_wrap_algorithm, self._supported_key_wrap_algorithms),
+            'wrapKey': (self.default_key_wrap_algorithm, self.supported_key_wrap_algorithms),
+            'unwrapKey': (self.default_key_wrap_algorithm, self.supported_key_wrap_algorithms),
             'sign': (self.default_signature_algorithm, self.supported_signature_algorithms),
             'verify': (self.default_signature_algorithm, self.supported_signature_algorithms)
         }[op]
@@ -75,5 +75,5 @@ class Key(with_metaclass(ABCMeta, object)):
         if not isinstance(algorithm, Algorithm):
             algorithm = Algorithm.resolve(algorithm)
 
-        if not algorithm or algorithm.name() not in supported_alogrithms:
+        if not algorithm or not supported_alogrithms or algorithm.name() not in supported_alogrithms:
             raise ValueError('invalid algorithm')
