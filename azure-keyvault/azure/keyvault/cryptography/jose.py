@@ -1,3 +1,8 @@
+# ---------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# ---------------------------------------------------------------------------------------------
+
 import json
 import os
 from ._internal import _str_to_b64url, _b64_to_str
