@@ -47,7 +47,8 @@ class VirtualNetworkUsage(Model):
         'unit': {'key': 'unit', 'type': 'str'},
     }
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super(VirtualNetworkUsage, self).__init__(**kwargs)
         self.current_value = None
         self.id = None
         self.limit = None

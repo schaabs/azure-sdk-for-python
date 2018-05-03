@@ -26,9 +26,9 @@ from .integration_runtime_status_response import IntegrationRuntimeStatusRespons
 from .integration_runtime_status_list_response import IntegrationRuntimeStatusListResponse
 from .update_integration_runtime_request import UpdateIntegrationRuntimeRequest
 from .update_integration_runtime_node_request import UpdateIntegrationRuntimeNodeRequest
+from .parameter_specification import ParameterSpecification
 from .linked_service import LinkedService
 from .linked_service_resource import LinkedServiceResource
-from .parameter_specification import ParameterSpecification
 from .dataset import Dataset
 from .dataset_resource import DatasetResource
 from .activity_dependency import ActivityDependency
@@ -57,8 +57,12 @@ from .operation_metric_specification import OperationMetricSpecification
 from .operation_service_specification import OperationServiceSpecification
 from .operation import Operation
 from .operation_list_response import OperationListResponse
+from .azure_databricks_linked_service import AzureDatabricksLinkedService
 from .azure_data_lake_analytics_linked_service import AzureDataLakeAnalyticsLinkedService
 from .hd_insight_on_demand_linked_service import HDInsightOnDemandLinkedService
+from .salesforce_marketing_cloud_linked_service import SalesforceMarketingCloudLinkedService
+from .netezza_linked_service import NetezzaLinkedService
+from .vertica_linked_service import VerticaLinkedService
 from .zoho_linked_service import ZohoLinkedService
 from .xero_linked_service import XeroLinkedService
 from .square_linked_service import SquareLinkedService
@@ -94,6 +98,7 @@ from .azure_search_linked_service import AzureSearchLinkedService
 from .custom_data_source_linked_service import CustomDataSourceLinkedService
 from .amazon_redshift_linked_service import AmazonRedshiftLinkedService
 from .amazon_s3_linked_service import AmazonS3LinkedService
+from .sap_ecc_linked_service import SapEccLinkedService
 from .sap_cloud_for_customer_linked_service import SapCloudForCustomerLinkedService
 from .salesforce_linked_service import SalesforceLinkedService
 from .azure_data_lake_store_linked_service import AzureDataLakeStoreLinkedService
@@ -125,6 +130,9 @@ from .azure_sql_database_linked_service import AzureSqlDatabaseLinkedService
 from .sql_server_linked_service import SqlServerLinkedService
 from .azure_sql_dw_linked_service import AzureSqlDWLinkedService
 from .azure_storage_linked_service import AzureStorageLinkedService
+from .salesforce_marketing_cloud_object_dataset import SalesforceMarketingCloudObjectDataset
+from .vertica_table_dataset import VerticaTableDataset
+from .netezza_table_dataset import NetezzaTableDataset
 from .zoho_object_dataset import ZohoObjectDataset
 from .xero_object_dataset import XeroObjectDataset
 from .square_object_dataset import SquareObjectDataset
@@ -166,6 +174,7 @@ from .http_dataset import HttpDataset
 from .azure_search_index_dataset import AzureSearchIndexDataset
 from .web_table_dataset import WebTableDataset
 from .sql_server_table_dataset import SqlServerTableDataset
+from .sap_ecc_resource_dataset import SapEccResourceDataset
 from .sap_cloud_for_customer_resource_dataset import SapCloudForCustomerResourceDataset
 from .salesforce_object_dataset import SalesforceObjectDataset
 from .relational_table_dataset import RelationalTableDataset
@@ -193,6 +202,7 @@ from .schedule_trigger_recurrence import ScheduleTriggerRecurrence
 from .schedule_trigger import ScheduleTrigger
 from .multiple_pipeline_trigger import MultiplePipelineTrigger
 from .activity_policy import ActivityPolicy
+from .databricks_notebook_activity import DatabricksNotebookActivity
 from .data_lake_analytics_usql_activity import DataLakeAnalyticsUSQLActivity
 from .azure_ml_update_resource_activity import AzureMLUpdateResourceActivity
 from .azure_ml_web_service_file import AzureMLWebServiceFile
@@ -202,6 +212,9 @@ from .web_activity_authentication import WebActivityAuthentication
 from .web_activity import WebActivity
 from .redshift_unload_settings import RedshiftUnloadSettings
 from .amazon_redshift_source import AmazonRedshiftSource
+from .salesforce_marketing_cloud_source import SalesforceMarketingCloudSource
+from .vertica_source import VerticaSource
+from .netezza_source import NetezzaSource
 from .zoho_source import ZohoSource
 from .xero_source import XeroSource
 from .square_source import SquareSource
@@ -241,6 +254,7 @@ from .file_system_source import FileSystemSource
 from .sql_dw_source import SqlDWSource
 from .stored_procedure_parameter import StoredProcedureParameter
 from .sql_source import SqlSource
+from .sap_ecc_source import SapEccSource
 from .sap_cloud_for_customer_source import SapCloudForCustomerSource
 from .salesforce_source import SalesforceSource
 from .relational_source import RelationalSource
@@ -253,6 +267,8 @@ from .lookup_activity import LookupActivity
 from .sql_server_stored_procedure_activity import SqlServerStoredProcedureActivity
 from .custom_activity_reference_object import CustomActivityReferenceObject
 from .custom_activity import CustomActivity
+from .ssis_package_location import SSISPackageLocation
+from .execute_ssis_package_activity import ExecuteSSISPackageActivity
 from .hd_insight_spark_activity import HDInsightSparkActivity
 from .hd_insight_streaming_activity import HDInsightStreamingActivity
 from .hd_insight_map_reduce_activity import HDInsightMapReduceActivity
@@ -280,19 +296,25 @@ from .sap_cloud_for_customer_sink import SapCloudForCustomerSink
 from .copy_sink import CopySink
 from .copy_activity import CopyActivity
 from .execution_activity import ExecutionActivity
+from .filter_activity import FilterActivity
 from .until_activity import UntilActivity
 from .wait_activity import WaitActivity
 from .for_each_activity import ForEachActivity
 from .if_condition_activity import IfConditionActivity
 from .execute_pipeline_activity import ExecutePipelineActivity
 from .control_activity import ControlActivity
+from .linked_integration_runtime import LinkedIntegrationRuntime
 from .self_hosted_integration_runtime_node import SelfHostedIntegrationRuntimeNode
 from .self_hosted_integration_runtime_status import SelfHostedIntegrationRuntimeStatus
 from .managed_integration_runtime_operation_result import ManagedIntegrationRuntimeOperationResult
 from .managed_integration_runtime_error import ManagedIntegrationRuntimeError
 from .managed_integration_runtime_node import ManagedIntegrationRuntimeNode
 from .managed_integration_runtime_status import ManagedIntegrationRuntimeStatus
+from .linked_integration_runtime_rbac import LinkedIntegrationRuntimeRbac
+from .linked_integration_runtime_key import LinkedIntegrationRuntimeKey
+from .linked_integration_runtime_properties import LinkedIntegrationRuntimeProperties
 from .self_hosted_integration_runtime import SelfHostedIntegrationRuntime
+from .integration_runtime_custom_setup_script_properties import IntegrationRuntimeCustomSetupScriptProperties
 from .integration_runtime_ssis_catalog_info import IntegrationRuntimeSsisCatalogInfo
 from .integration_runtime_ssis_properties import IntegrationRuntimeSsisProperties
 from .integration_runtime_vnet_properties import IntegrationRuntimeVNetProperties
@@ -354,6 +376,8 @@ from .data_factory_management_client_enums import (
     WebActivityMethod,
     CassandraSourceReadConsistencyLevels,
     StoredProcedureParameterType,
+    SalesforceSourceReadBehavior,
+    SSISExecutionRuntime,
     HDInsightActivityDebugInfoOption,
     SalesforceSinkWriteBehavior,
     AzureSearchIndexWriteBehaviorType,
@@ -366,6 +390,8 @@ from .data_factory_management_client_enums import (
     IntegrationRuntimeInternalChannelEncryptionMode,
     ManagedIntegrationRuntimeNodeStatus,
     IntegrationRuntimeSsisCatalogPricingTier,
+    IntegrationRuntimeLicenseType,
+    IntegrationRuntimeEdition,
     IntegrationRuntimeAuthKeyName,
 )
 
@@ -387,9 +413,9 @@ __all__ = [
     'IntegrationRuntimeStatusListResponse',
     'UpdateIntegrationRuntimeRequest',
     'UpdateIntegrationRuntimeNodeRequest',
+    'ParameterSpecification',
     'LinkedService',
     'LinkedServiceResource',
-    'ParameterSpecification',
     'Dataset',
     'DatasetResource',
     'ActivityDependency',
@@ -418,8 +444,12 @@ __all__ = [
     'OperationServiceSpecification',
     'Operation',
     'OperationListResponse',
+    'AzureDatabricksLinkedService',
     'AzureDataLakeAnalyticsLinkedService',
     'HDInsightOnDemandLinkedService',
+    'SalesforceMarketingCloudLinkedService',
+    'NetezzaLinkedService',
+    'VerticaLinkedService',
     'ZohoLinkedService',
     'XeroLinkedService',
     'SquareLinkedService',
@@ -455,6 +485,7 @@ __all__ = [
     'CustomDataSourceLinkedService',
     'AmazonRedshiftLinkedService',
     'AmazonS3LinkedService',
+    'SapEccLinkedService',
     'SapCloudForCustomerLinkedService',
     'SalesforceLinkedService',
     'AzureDataLakeStoreLinkedService',
@@ -486,6 +517,9 @@ __all__ = [
     'SqlServerLinkedService',
     'AzureSqlDWLinkedService',
     'AzureStorageLinkedService',
+    'SalesforceMarketingCloudObjectDataset',
+    'VerticaTableDataset',
+    'NetezzaTableDataset',
     'ZohoObjectDataset',
     'XeroObjectDataset',
     'SquareObjectDataset',
@@ -527,6 +561,7 @@ __all__ = [
     'AzureSearchIndexDataset',
     'WebTableDataset',
     'SqlServerTableDataset',
+    'SapEccResourceDataset',
     'SapCloudForCustomerResourceDataset',
     'SalesforceObjectDataset',
     'RelationalTableDataset',
@@ -554,6 +589,7 @@ __all__ = [
     'ScheduleTrigger',
     'MultiplePipelineTrigger',
     'ActivityPolicy',
+    'DatabricksNotebookActivity',
     'DataLakeAnalyticsUSQLActivity',
     'AzureMLUpdateResourceActivity',
     'AzureMLWebServiceFile',
@@ -563,6 +599,9 @@ __all__ = [
     'WebActivity',
     'RedshiftUnloadSettings',
     'AmazonRedshiftSource',
+    'SalesforceMarketingCloudSource',
+    'VerticaSource',
+    'NetezzaSource',
     'ZohoSource',
     'XeroSource',
     'SquareSource',
@@ -602,6 +641,7 @@ __all__ = [
     'SqlDWSource',
     'StoredProcedureParameter',
     'SqlSource',
+    'SapEccSource',
     'SapCloudForCustomerSource',
     'SalesforceSource',
     'RelationalSource',
@@ -614,6 +654,8 @@ __all__ = [
     'SqlServerStoredProcedureActivity',
     'CustomActivityReferenceObject',
     'CustomActivity',
+    'SSISPackageLocation',
+    'ExecuteSSISPackageActivity',
     'HDInsightSparkActivity',
     'HDInsightStreamingActivity',
     'HDInsightMapReduceActivity',
@@ -641,19 +683,25 @@ __all__ = [
     'CopySink',
     'CopyActivity',
     'ExecutionActivity',
+    'FilterActivity',
     'UntilActivity',
     'WaitActivity',
     'ForEachActivity',
     'IfConditionActivity',
     'ExecutePipelineActivity',
     'ControlActivity',
+    'LinkedIntegrationRuntime',
     'SelfHostedIntegrationRuntimeNode',
     'SelfHostedIntegrationRuntimeStatus',
     'ManagedIntegrationRuntimeOperationResult',
     'ManagedIntegrationRuntimeError',
     'ManagedIntegrationRuntimeNode',
     'ManagedIntegrationRuntimeStatus',
+    'LinkedIntegrationRuntimeRbac',
+    'LinkedIntegrationRuntimeKey',
+    'LinkedIntegrationRuntimeProperties',
     'SelfHostedIntegrationRuntime',
+    'IntegrationRuntimeCustomSetupScriptProperties',
     'IntegrationRuntimeSsisCatalogInfo',
     'IntegrationRuntimeSsisProperties',
     'IntegrationRuntimeVNetProperties',
@@ -714,6 +762,8 @@ __all__ = [
     'WebActivityMethod',
     'CassandraSourceReadConsistencyLevels',
     'StoredProcedureParameterType',
+    'SalesforceSourceReadBehavior',
+    'SSISExecutionRuntime',
     'HDInsightActivityDebugInfoOption',
     'SalesforceSinkWriteBehavior',
     'AzureSearchIndexWriteBehaviorType',
@@ -726,5 +776,7 @@ __all__ = [
     'IntegrationRuntimeInternalChannelEncryptionMode',
     'ManagedIntegrationRuntimeNodeStatus',
     'IntegrationRuntimeSsisCatalogPricingTier',
+    'IntegrationRuntimeLicenseType',
+    'IntegrationRuntimeEdition',
     'IntegrationRuntimeAuthKeyName',
 ]

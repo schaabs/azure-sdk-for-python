@@ -3,6 +3,23 @@
 Release History
 ===============
 
+0.8.6 (2018-03-22)
+++++++++++++++++++
+
+**Features**
+
+- Added support for List and Cancel operation on Azure database and elastic pool REST API
+- Added support for Auto-tuning REST API
+
+0.8.5 (2018-01-18)
+++++++++++++++++++
+
+**Features**
+
+- Added support for renaming databases
+- Added missing database editions and service objectives
+- Added ability to list long term retention vaults & policies
+
 0.8.4 (2017-11-14)
 ++++++++++++++++++
 

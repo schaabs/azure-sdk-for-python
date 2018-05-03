@@ -15,7 +15,9 @@ from msrestazure import AzureConfiguration
 from .version import VERSION
 from .operations.container_groups_operations import ContainerGroupsOperations
 from .operations.operations import Operations
+from .operations.container_group_usage_operations import ContainerGroupUsageOperations
 from .operations.container_logs_operations import ContainerLogsOperations
+from .operations.start_container_operations import StartContainerOperations
 from . import models
 
 
@@ -41,8 +43,6 @@ class ContainerInstanceManagementClientConfiguration(AzureConfiguration):
             raise ValueError("Parameter 'credentials' must not be None.")
         if subscription_id is None:
             raise ValueError("Parameter 'subscription_id' must not be None.")
-        if not isinstance(subscription_id, str):
-            raise TypeError("Parameter 'subscription_id' must be str.")
         if not base_url:
             base_url = 'https://management.azure.com'
 
@@ -65,8 +65,12 @@ class ContainerInstanceManagementClient(object):
     :vartype container_groups: azure.mgmt.containerinstance.operations.ContainerGroupsOperations
     :ivar operations: Operations operations
     :vartype operations: azure.mgmt.containerinstance.operations.Operations
+    :ivar container_group_usage: ContainerGroupUsage operations
+    :vartype container_group_usage: azure.mgmt.containerinstance.operations.ContainerGroupUsageOperations
     :ivar container_logs: ContainerLogs operations
     :vartype container_logs: azure.mgmt.containerinstance.operations.ContainerLogsOperations
+    :ivar start_container: StartContainer operations
+    :vartype start_container: azure.mgmt.containerinstance.operations.StartContainerOperations
 
     :param credentials: Credentials needed for the client to connect to Azure.
     :type credentials: :mod:`A msrestazure Credentials
@@ -85,7 +89,7 @@ class ContainerInstanceManagementClient(object):
         self._client = ServiceClient(self.config.credentials, self.config)
 
         client_models = {k: v for k, v in models.__dict__.items() if isinstance(v, type)}
-        self.api_version = '2017-10-01-preview'
+        self.api_version = '2018-02-01-preview'
         self._serialize = Serializer(client_models)
         self._deserialize = Deserializer(client_models)
 
@@ -93,5 +97,9 @@ class ContainerInstanceManagementClient(object):
             self._client, self.config, self._serialize, self._deserialize)
         self.operations = Operations(
             self._client, self.config, self._serialize, self._deserialize)
+        self.container_group_usage = ContainerGroupUsageOperations(
+            self._client, self.config, self._serialize, self._deserialize)
         self.container_logs = ContainerLogsOperations(
+            self._client, self.config, self._serialize, self._deserialize)
+        self.start_container = StartContainerOperations(
             self._client, self.config, self._serialize, self._deserialize)

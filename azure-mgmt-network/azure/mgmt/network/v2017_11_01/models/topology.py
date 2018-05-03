@@ -43,8 +43,9 @@ class Topology(Model):
         'resources': {'key': 'resources', 'type': '[TopologyResource]'},
     }
 
-    def __init__(self, resources=None):
+    def __init__(self, **kwargs):
+        super(Topology, self).__init__(**kwargs)
         self.id = None
         self.created_date_time = None
         self.last_modified = None
-        self.resources = resources
+        self.resources = kwargs.get('resources', None)

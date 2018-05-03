@@ -22,9 +22,11 @@ class ResourceLinksOperations(object):
     :param client: Client for service requests.
     :param config: Configuration of service client.
     :param serializer: An object model serializer.
-    :param deserializer: An objec model deserializer.
+    :param deserializer: An object model deserializer.
     :ivar api_version: The API version to use for the operation. Constant value: "2016-09-01".
     """
+
+    models = models
 
     def __init__(self, client, config, serializer, deserializer):
 
@@ -55,7 +57,7 @@ class ResourceLinksOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{linkId}'
+        url = self.delete.metadata['url']
         path_format_arguments = {
             'linkId': self._serialize.url("link_id", link_id, 'str', skip_quote=True)
         }
@@ -77,7 +79,7 @@ class ResourceLinksOperations(object):
 
         # Construct and send request
         request = self._client.delete(url, query_parameters)
-        response = self._client.send(request, header_parameters, **operation_config)
+        response = self._client.send(request, header_parameters, stream=False, **operation_config)
 
         if response.status_code not in [200, 204]:
             exp = CloudError(response)
@@ -87,6 +89,7 @@ class ResourceLinksOperations(object):
         if raw:
             client_raw_response = ClientRawResponse(None, response)
             return client_raw_response
+    delete.metadata = {'url': '/{linkId}'}
 
     def create_or_update(
             self, link_id, properties=None, custom_headers=None, raw=False, **operation_config):
@@ -114,7 +117,7 @@ class ResourceLinksOperations(object):
         parameters = models.ResourceLink(properties=properties)
 
         # Construct URL
-        url = '/{linkId}'
+        url = self.create_or_update.metadata['url']
         path_format_arguments = {
             'linkId': self._serialize.url("link_id", link_id, 'str', skip_quote=True)
         }
@@ -140,18 +143,18 @@ class ResourceLinksOperations(object):
         # Construct and send request
         request = self._client.put(url, query_parameters)
         response = self._client.send(
-            request, header_parameters, body_content, **operation_config)
+            request, header_parameters, body_content, stream=False, **operation_config)
 
-        if response.status_code not in [201, 200]:
+        if response.status_code not in [200, 201]:
             exp = CloudError(response)
             exp.request_id = response.headers.get('x-ms-request-id')
             raise exp
 
         deserialized = None
 
-        if response.status_code == 201:
-            deserialized = self._deserialize('ResourceLink', response)
         if response.status_code == 200:
+            deserialized = self._deserialize('ResourceLink', response)
+        if response.status_code == 201:
             deserialized = self._deserialize('ResourceLink', response)
 
         if raw:
@@ -159,6 +162,7 @@ class ResourceLinksOperations(object):
             return client_raw_response
 
         return deserialized
+    create_or_update.metadata = {'url': '/{linkId}'}
 
     def get(
             self, link_id, custom_headers=None, raw=False, **operation_config):
@@ -179,7 +183,7 @@ class ResourceLinksOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{linkId}'
+        url = self.get.metadata['url']
         path_format_arguments = {
             'linkId': self._serialize.url("link_id", link_id, 'str', skip_quote=True)
         }
@@ -201,7 +205,7 @@ class ResourceLinksOperations(object):
 
         # Construct and send request
         request = self._client.get(url, query_parameters)
-        response = self._client.send(request, header_parameters, **operation_config)
+        response = self._client.send(request, header_parameters, stream=False, **operation_config)
 
         if response.status_code not in [200]:
             exp = CloudError(response)
@@ -218,6 +222,7 @@ class ResourceLinksOperations(object):
             return client_raw_response
 
         return deserialized
+    get.metadata = {'url': '/{linkId}'}
 
     def list_at_subscription(
             self, filter=None, custom_headers=None, raw=False, **operation_config):
@@ -241,7 +246,7 @@ class ResourceLinksOperations(object):
 
             if not next_link:
                 # Construct URL
-                url = '/subscriptions/{subscriptionId}/providers/Microsoft.Resources/links'
+                url = self.list_at_subscription.metadata['url']
                 path_format_arguments = {
                     'subscriptionId': self._serialize.url("self.config.subscription_id", self.config.subscription_id, 'str')
                 }
@@ -270,7 +275,7 @@ class ResourceLinksOperations(object):
             # Construct and send request
             request = self._client.get(url, query_parameters)
             response = self._client.send(
-                request, header_parameters, **operation_config)
+                request, header_parameters, stream=False, **operation_config)
 
             if response.status_code not in [200]:
                 exp = CloudError(response)
@@ -288,6 +293,7 @@ class ResourceLinksOperations(object):
             return client_raw_response
 
         return deserialized
+    list_at_subscription.metadata = {'url': '/subscriptions/{subscriptionId}/providers/Microsoft.Resources/links'}
 
     def list_at_source_scope(
             self, scope, filter=None, custom_headers=None, raw=False, **operation_config):
@@ -316,7 +322,7 @@ class ResourceLinksOperations(object):
 
             if not next_link:
                 # Construct URL
-                url = '/{scope}/providers/Microsoft.Resources/links'
+                url = self.list_at_source_scope.metadata['url']
                 path_format_arguments = {
                     'scope': self._serialize.url("scope", scope, 'str', skip_quote=True)
                 }
@@ -345,7 +351,7 @@ class ResourceLinksOperations(object):
             # Construct and send request
             request = self._client.get(url, query_parameters)
             response = self._client.send(
-                request, header_parameters, **operation_config)
+                request, header_parameters, stream=False, **operation_config)
 
             if response.status_code not in [200]:
                 exp = CloudError(response)
@@ -363,3 +369,4 @@ class ResourceLinksOperations(object):
             return client_raw_response
 
         return deserialized
+    list_at_source_scope.metadata = {'url': '/{scope}/providers/Microsoft.Resources/links'}

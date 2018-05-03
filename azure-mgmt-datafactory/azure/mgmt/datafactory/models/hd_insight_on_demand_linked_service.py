@@ -23,6 +23,12 @@ class HDInsightOnDemandLinkedService(LinkedService):
      ~azure.mgmt.datafactory.models.IntegrationRuntimeReference
     :param description: Linked service description.
     :type description: str
+    :param parameters: Parameters for linked service.
+    :type parameters: dict[str,
+     ~azure.mgmt.datafactory.models.ParameterSpecification]
+    :param annotations: List of tags that can be used for describing the
+     Dataset.
+    :type annotations: list[object]
     :param type: Constant filled by server.
     :type type: str
     :param cluster_size: Number of worker/data nodes in the cluster.
@@ -48,7 +54,7 @@ class HDInsightOnDemandLinkedService(LinkedService):
      hostSubscriptionId. Type: string (or Expression with resultType string).
     :type service_principal_id: object
     :param service_principal_key: The key for the service principal id.
-    :type service_principal_key: ~azure.mgmt.datafactory.models.SecureString
+    :type service_principal_key: ~azure.mgmt.datafactory.models.SecretBase
     :param tenant: The Tenant id/name to which the service principal belongs.
      Type: string (or Expression with resultType string).
     :type tenant: object
@@ -63,14 +69,14 @@ class HDInsightOnDemandLinkedService(LinkedService):
      (or Expression with resultType string).
     :type cluster_user_name: object
     :param cluster_password: The password to access the cluster.
-    :type cluster_password: ~azure.mgmt.datafactory.models.SecureString
+    :type cluster_password: ~azure.mgmt.datafactory.models.SecretBase
     :param cluster_ssh_user_name: The username to SSH remotely connect to
      cluster’s node (for Linux). Type: string (or Expression with resultType
      string).
     :type cluster_ssh_user_name: object
     :param cluster_ssh_password: The password to SSH remotely connect
      cluster’s node (for Linux).
-    :type cluster_ssh_password: ~azure.mgmt.datafactory.models.SecureString
+    :type cluster_ssh_password: ~azure.mgmt.datafactory.models.SecretBase
     :param additional_linked_service_names: Specifies additional storage
      accounts for the HDInsight linked service so that the Data Factory service
      can register them on your behalf.
@@ -115,6 +121,15 @@ class HDInsightOnDemandLinkedService(LinkedService):
      authentication. Credentials are encrypted using the integration runtime
      credential manager. Type: string (or Expression with resultType string).
     :type encrypted_credential: object
+    :param head_node_size: Specifies the size of the head node for the
+     HDInsight cluster.
+    :type head_node_size: object
+    :param data_node_size: Specifies the size of the data node for the
+     HDInsight cluster.
+    :type data_node_size: object
+    :param zookeeper_node_size: Specifies the size of the Zoo Keeper node for
+     the HDInsight cluster.
+    :type zookeeper_node_size: object
     """
 
     _validation = {
@@ -132,6 +147,8 @@ class HDInsightOnDemandLinkedService(LinkedService):
         'additional_properties': {'key': '', 'type': '{object}'},
         'connect_via': {'key': 'connectVia', 'type': 'IntegrationRuntimeReference'},
         'description': {'key': 'description', 'type': 'str'},
+        'parameters': {'key': 'parameters', 'type': '{ParameterSpecification}'},
+        'annotations': {'key': 'annotations', 'type': '[object]'},
         'type': {'key': 'type', 'type': 'str'},
         'cluster_size': {'key': 'typeProperties.clusterSize', 'type': 'object'},
         'time_to_live': {'key': 'typeProperties.timeToLive', 'type': 'object'},
@@ -139,14 +156,14 @@ class HDInsightOnDemandLinkedService(LinkedService):
         'linked_service_name': {'key': 'typeProperties.linkedServiceName', 'type': 'LinkedServiceReference'},
         'host_subscription_id': {'key': 'typeProperties.hostSubscriptionId', 'type': 'object'},
         'service_principal_id': {'key': 'typeProperties.servicePrincipalId', 'type': 'object'},
-        'service_principal_key': {'key': 'typeProperties.servicePrincipalKey', 'type': 'SecureString'},
+        'service_principal_key': {'key': 'typeProperties.servicePrincipalKey', 'type': 'SecretBase'},
         'tenant': {'key': 'typeProperties.tenant', 'type': 'object'},
         'cluster_resource_group': {'key': 'typeProperties.clusterResourceGroup', 'type': 'object'},
         'cluster_name_prefix': {'key': 'typeProperties.clusterNamePrefix', 'type': 'object'},
         'cluster_user_name': {'key': 'typeProperties.clusterUserName', 'type': 'object'},
-        'cluster_password': {'key': 'typeProperties.clusterPassword', 'type': 'SecureString'},
+        'cluster_password': {'key': 'typeProperties.clusterPassword', 'type': 'SecretBase'},
         'cluster_ssh_user_name': {'key': 'typeProperties.clusterSshUserName', 'type': 'object'},
-        'cluster_ssh_password': {'key': 'typeProperties.clusterSshPassword', 'type': 'SecureString'},
+        'cluster_ssh_password': {'key': 'typeProperties.clusterSshPassword', 'type': 'SecretBase'},
         'additional_linked_service_names': {'key': 'typeProperties.additionalLinkedServiceNames', 'type': '[LinkedServiceReference]'},
         'hcatalog_linked_service_name': {'key': 'typeProperties.hcatalogLinkedServiceName', 'type': 'LinkedServiceReference'},
         'cluster_type': {'key': 'typeProperties.clusterType', 'type': 'object'},
@@ -160,10 +177,13 @@ class HDInsightOnDemandLinkedService(LinkedService):
         'storm_configuration': {'key': 'typeProperties.stormConfiguration', 'type': 'object'},
         'yarn_configuration': {'key': 'typeProperties.yarnConfiguration', 'type': 'object'},
         'encrypted_credential': {'key': 'typeProperties.encryptedCredential', 'type': 'object'},
+        'head_node_size': {'key': 'typeProperties.headNodeSize', 'type': 'object'},
+        'data_node_size': {'key': 'typeProperties.dataNodeSize', 'type': 'object'},
+        'zookeeper_node_size': {'key': 'typeProperties.zookeeperNodeSize', 'type': 'object'},
     }
 
-    def __init__(self, cluster_size, time_to_live, version, linked_service_name, host_subscription_id, tenant, cluster_resource_group, additional_properties=None, connect_via=None, description=None, service_principal_id=None, service_principal_key=None, cluster_name_prefix=None, cluster_user_name=None, cluster_password=None, cluster_ssh_user_name=None, cluster_ssh_password=None, additional_linked_service_names=None, hcatalog_linked_service_name=None, cluster_type=None, spark_version=None, core_configuration=None, h_base_configuration=None, hdfs_configuration=None, hive_configuration=None, map_reduce_configuration=None, oozie_configuration=None, storm_configuration=None, yarn_configuration=None, encrypted_credential=None):
-        super(HDInsightOnDemandLinkedService, self).__init__(additional_properties=additional_properties, connect_via=connect_via, description=description)
+    def __init__(self, cluster_size, time_to_live, version, linked_service_name, host_subscription_id, tenant, cluster_resource_group, additional_properties=None, connect_via=None, description=None, parameters=None, annotations=None, service_principal_id=None, service_principal_key=None, cluster_name_prefix=None, cluster_user_name=None, cluster_password=None, cluster_ssh_user_name=None, cluster_ssh_password=None, additional_linked_service_names=None, hcatalog_linked_service_name=None, cluster_type=None, spark_version=None, core_configuration=None, h_base_configuration=None, hdfs_configuration=None, hive_configuration=None, map_reduce_configuration=None, oozie_configuration=None, storm_configuration=None, yarn_configuration=None, encrypted_credential=None, head_node_size=None, data_node_size=None, zookeeper_node_size=None):
+        super(HDInsightOnDemandLinkedService, self).__init__(additional_properties=additional_properties, connect_via=connect_via, description=description, parameters=parameters, annotations=annotations)
         self.cluster_size = cluster_size
         self.time_to_live = time_to_live
         self.version = version
@@ -191,4 +211,7 @@ class HDInsightOnDemandLinkedService(LinkedService):
         self.storm_configuration = storm_configuration
         self.yarn_configuration = yarn_configuration
         self.encrypted_credential = encrypted_credential
+        self.head_node_size = head_node_size
+        self.data_node_size = data_node_size
+        self.zookeeper_node_size = zookeeper_node_size
         self.type = 'HDInsightOnDemand'

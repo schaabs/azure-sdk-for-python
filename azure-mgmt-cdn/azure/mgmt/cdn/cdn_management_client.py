@@ -51,7 +51,7 @@ class CdnManagementClientConfiguration(AzureConfiguration):
 
         super(CdnManagementClientConfiguration, self).__init__(base_url)
 
-        self.add_user_agent('cdnmanagementclient/{}'.format(VERSION))
+        self.add_user_agent('azure-mgmt-cdn/{}'.format(VERSION))
         self.add_user_agent('Azure-SDK-For-Python')
 
         self.credentials = credentials
@@ -134,7 +134,7 @@ class CdnManagementClient(object):
         check_name_availability_input = models.CheckNameAvailabilityInput(name=name)
 
         # Construct URL
-        url = '/providers/Microsoft.Cdn/checkNameAvailability'
+        url = self.check_name_availability.metadata['url']
 
         # Construct parameters
         query_parameters = {}
@@ -156,7 +156,7 @@ class CdnManagementClient(object):
         # Construct and send request
         request = self._client.post(url, query_parameters)
         response = self._client.send(
-            request, header_parameters, body_content, **operation_config)
+            request, header_parameters, body_content, stream=False, **operation_config)
 
         if response.status_code not in [200]:
             raise models.ErrorResponseException(self._deserialize, response)
@@ -171,6 +171,7 @@ class CdnManagementClient(object):
             return client_raw_response
 
         return deserialized
+    check_name_availability.metadata = {'url': '/providers/Microsoft.Cdn/checkNameAvailability'}
 
     def validate_probe(
             self, probe_url, custom_headers=None, raw=False, **operation_config):
@@ -196,7 +197,7 @@ class CdnManagementClient(object):
         validate_probe_input = models.ValidateProbeInput(probe_url=probe_url)
 
         # Construct URL
-        url = '/subscriptions/{subscriptionId}/providers/Microsoft.Cdn/validateProbe'
+        url = self.validate_probe.metadata['url']
         path_format_arguments = {
             'subscriptionId': self._serialize.url("self.config.subscription_id", self.config.subscription_id, 'str')
         }
@@ -222,7 +223,7 @@ class CdnManagementClient(object):
         # Construct and send request
         request = self._client.post(url, query_parameters)
         response = self._client.send(
-            request, header_parameters, body_content, **operation_config)
+            request, header_parameters, body_content, stream=False, **operation_config)
 
         if response.status_code not in [200]:
             raise models.ErrorResponseException(self._deserialize, response)
@@ -237,3 +238,4 @@ class CdnManagementClient(object):
             return client_raw_response
 
         return deserialized
+    validate_probe.metadata = {'url': '/subscriptions/{subscriptionId}/providers/Microsoft.Cdn/validateProbe'}

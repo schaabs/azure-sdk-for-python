@@ -23,9 +23,11 @@ class PolicyAssignmentsOperations(object):
     :param client: Client for service requests.
     :param config: Configuration of service client.
     :param serializer: An object model serializer.
-    :param deserializer: An objec model deserializer.
+    :param deserializer: An object model deserializer.
     :ivar api_version: The API version to use for the operation. Constant value: "2016-12-01".
     """
+
+    models = models
 
     def __init__(self, client, config, serializer, deserializer):
 
@@ -57,7 +59,7 @@ class PolicyAssignmentsOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{scope}/providers/Microsoft.Authorization/policyAssignments/{policyAssignmentName}'
+        url = self.delete.metadata['url']
         path_format_arguments = {
             'scope': self._serialize.url("scope", scope, 'str', skip_quote=True),
             'policyAssignmentName': self._serialize.url("policy_assignment_name", policy_assignment_name, 'str')
@@ -80,7 +82,7 @@ class PolicyAssignmentsOperations(object):
 
         # Construct and send request
         request = self._client.delete(url, query_parameters)
-        response = self._client.send(request, header_parameters, **operation_config)
+        response = self._client.send(request, header_parameters, stream=False, **operation_config)
 
         if response.status_code not in [200, 204]:
             exp = CloudError(response)
@@ -97,6 +99,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    delete.metadata = {'url': '/{scope}/providers/Microsoft.Authorization/policyAssignments/{policyAssignmentName}'}
 
     def create(
             self, scope, policy_assignment_name, parameters, custom_headers=None, raw=False, **operation_config):
@@ -125,7 +128,7 @@ class PolicyAssignmentsOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{scope}/providers/Microsoft.Authorization/policyAssignments/{policyAssignmentName}'
+        url = self.create.metadata['url']
         path_format_arguments = {
             'scope': self._serialize.url("scope", scope, 'str', skip_quote=True),
             'policyAssignmentName': self._serialize.url("policy_assignment_name", policy_assignment_name, 'str')
@@ -152,7 +155,7 @@ class PolicyAssignmentsOperations(object):
         # Construct and send request
         request = self._client.put(url, query_parameters)
         response = self._client.send(
-            request, header_parameters, body_content, **operation_config)
+            request, header_parameters, body_content, stream=False, **operation_config)
 
         if response.status_code not in [201]:
             exp = CloudError(response)
@@ -169,6 +172,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    create.metadata = {'url': '/{scope}/providers/Microsoft.Authorization/policyAssignments/{policyAssignmentName}'}
 
     def get(
             self, scope, policy_assignment_name, custom_headers=None, raw=False, **operation_config):
@@ -191,7 +195,7 @@ class PolicyAssignmentsOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{scope}/providers/Microsoft.Authorization/policyAssignments/{policyAssignmentName}'
+        url = self.get.metadata['url']
         path_format_arguments = {
             'scope': self._serialize.url("scope", scope, 'str', skip_quote=True),
             'policyAssignmentName': self._serialize.url("policy_assignment_name", policy_assignment_name, 'str')
@@ -214,7 +218,7 @@ class PolicyAssignmentsOperations(object):
 
         # Construct and send request
         request = self._client.get(url, query_parameters)
-        response = self._client.send(request, header_parameters, **operation_config)
+        response = self._client.send(request, header_parameters, stream=False, **operation_config)
 
         if response.status_code not in [200]:
             exp = CloudError(response)
@@ -231,6 +235,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    get.metadata = {'url': '/{scope}/providers/Microsoft.Authorization/policyAssignments/{policyAssignmentName}'}
 
     def list_for_resource_group(
             self, resource_group_name, filter=None, custom_headers=None, raw=False, **operation_config):
@@ -255,7 +260,7 @@ class PolicyAssignmentsOperations(object):
 
             if not next_link:
                 # Construct URL
-                url = '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Authorization/policyAssignments'
+                url = self.list_for_resource_group.metadata['url']
                 path_format_arguments = {
                     'resourceGroupName': self._serialize.url("resource_group_name", resource_group_name, 'str', max_length=90, min_length=1, pattern=r'^[-\w\._\(\)]+$'),
                     'subscriptionId': self._serialize.url("self.config.subscription_id", self.config.subscription_id, 'str')
@@ -285,7 +290,7 @@ class PolicyAssignmentsOperations(object):
             # Construct and send request
             request = self._client.get(url, query_parameters)
             response = self._client.send(
-                request, header_parameters, **operation_config)
+                request, header_parameters, stream=False, **operation_config)
 
             if response.status_code not in [200]:
                 exp = CloudError(response)
@@ -303,6 +308,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    list_for_resource_group.metadata = {'url': '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Authorization/policyAssignments'}
 
     def list_for_resource(
             self, resource_group_name, resource_provider_namespace, parent_resource_path, resource_type, resource_name, filter=None, custom_headers=None, raw=False, **operation_config):
@@ -341,7 +347,7 @@ class PolicyAssignmentsOperations(object):
 
             if not next_link:
                 # Construct URL
-                url = '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{parentResourcePath}/{resourceType}/{resourceName}/providers/Microsoft.Authorization/policyAssignments'
+                url = self.list_for_resource.metadata['url']
                 path_format_arguments = {
                     'resourceGroupName': self._serialize.url("resource_group_name", resource_group_name, 'str', max_length=90, min_length=1, pattern=r'^[-\w\._\(\)]+$'),
                     'resourceProviderNamespace': self._serialize.url("resource_provider_namespace", resource_provider_namespace, 'str'),
@@ -375,7 +381,7 @@ class PolicyAssignmentsOperations(object):
             # Construct and send request
             request = self._client.get(url, query_parameters)
             response = self._client.send(
-                request, header_parameters, **operation_config)
+                request, header_parameters, stream=False, **operation_config)
 
             if response.status_code not in [200]:
                 exp = CloudError(response)
@@ -393,6 +399,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    list_for_resource.metadata = {'url': '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{parentResourcePath}/{resourceType}/{resourceName}/providers/Microsoft.Authorization/policyAssignments'}
 
     def list(
             self, filter=None, custom_headers=None, raw=False, **operation_config):
@@ -414,7 +421,7 @@ class PolicyAssignmentsOperations(object):
 
             if not next_link:
                 # Construct URL
-                url = '/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/policyAssignments'
+                url = self.list.metadata['url']
                 path_format_arguments = {
                     'subscriptionId': self._serialize.url("self.config.subscription_id", self.config.subscription_id, 'str')
                 }
@@ -443,7 +450,7 @@ class PolicyAssignmentsOperations(object):
             # Construct and send request
             request = self._client.get(url, query_parameters)
             response = self._client.send(
-                request, header_parameters, **operation_config)
+                request, header_parameters, stream=False, **operation_config)
 
             if response.status_code not in [200]:
                 exp = CloudError(response)
@@ -461,6 +468,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    list.metadata = {'url': '/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/policyAssignments'}
 
     def delete_by_id(
             self, policy_assignment_id, custom_headers=None, raw=False, **operation_config):
@@ -489,7 +497,7 @@ class PolicyAssignmentsOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{policyAssignmentId}'
+        url = self.delete_by_id.metadata['url']
         path_format_arguments = {
             'policyAssignmentId': self._serialize.url("policy_assignment_id", policy_assignment_id, 'str', skip_quote=True)
         }
@@ -511,7 +519,7 @@ class PolicyAssignmentsOperations(object):
 
         # Construct and send request
         request = self._client.delete(url, query_parameters)
-        response = self._client.send(request, header_parameters, **operation_config)
+        response = self._client.send(request, header_parameters, stream=False, **operation_config)
 
         if response.status_code not in [200]:
             exp = CloudError(response)
@@ -528,6 +536,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    delete_by_id.metadata = {'url': '/{policyAssignmentId}'}
 
     def create_by_id(
             self, policy_assignment_id, parameters, custom_headers=None, raw=False, **operation_config):
@@ -561,7 +570,7 @@ class PolicyAssignmentsOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{policyAssignmentId}'
+        url = self.create_by_id.metadata['url']
         path_format_arguments = {
             'policyAssignmentId': self._serialize.url("policy_assignment_id", policy_assignment_id, 'str', skip_quote=True)
         }
@@ -587,7 +596,7 @@ class PolicyAssignmentsOperations(object):
         # Construct and send request
         request = self._client.put(url, query_parameters)
         response = self._client.send(
-            request, header_parameters, body_content, **operation_config)
+            request, header_parameters, body_content, stream=False, **operation_config)
 
         if response.status_code not in [201]:
             exp = CloudError(response)
@@ -604,6 +613,7 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    create_by_id.metadata = {'url': '/{policyAssignmentId}'}
 
     def get_by_id(
             self, policy_assignment_id, custom_headers=None, raw=False, **operation_config):
@@ -632,7 +642,7 @@ class PolicyAssignmentsOperations(object):
         :raises: :class:`CloudError<msrestazure.azure_exceptions.CloudError>`
         """
         # Construct URL
-        url = '/{policyAssignmentId}'
+        url = self.get_by_id.metadata['url']
         path_format_arguments = {
             'policyAssignmentId': self._serialize.url("policy_assignment_id", policy_assignment_id, 'str', skip_quote=True)
         }
@@ -654,7 +664,7 @@ class PolicyAssignmentsOperations(object):
 
         # Construct and send request
         request = self._client.get(url, query_parameters)
-        response = self._client.send(request, header_parameters, **operation_config)
+        response = self._client.send(request, header_parameters, stream=False, **operation_config)
 
         if response.status_code not in [200]:
             exp = CloudError(response)
@@ -671,3 +681,4 @@ class PolicyAssignmentsOperations(object):
             return client_raw_response
 
         return deserialized
+    get_by_id.metadata = {'url': '/{policyAssignmentId}'}

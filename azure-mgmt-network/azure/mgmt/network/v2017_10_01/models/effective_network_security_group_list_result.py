@@ -34,6 +34,7 @@ class EffectiveNetworkSecurityGroupListResult(Model):
         'next_link': {'key': 'nextLink', 'type': 'str'},
     }
 
-    def __init__(self, value=None):
-        self.value = value
+    def __init__(self, **kwargs):
+        super(EffectiveNetworkSecurityGroupListResult, self).__init__(**kwargs)
+        self.value = kwargs.get('value', None)
         self.next_link = None

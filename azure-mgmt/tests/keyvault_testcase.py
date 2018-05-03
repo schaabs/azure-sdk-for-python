@@ -13,7 +13,7 @@ from azure.mgmt.keyvault import KeyVaultManagementClient
 from azure.mgmt.keyvault.models import \
     (VaultCreateOrUpdateParameters, VaultProperties, Sku, AccessPolicyEntry, Permissions, KeyPermissions, SecretPermissions, SkuName,
      CertificatePermissions, StoragePermissions)
-from azure.keyvault import KeyVaultClient, KeyVaultAuthentication, KeyVaultAuthBase, HttpBearerChallenge
+from azure.keyvault import KeyVaultClient, KeyVaultAuthentication, KeyVaultAuthBase, HttpChallenge
 
 from azure.common.exceptions import (
     CloudError
@@ -124,8 +124,8 @@ class AzureKeyVaultTestCase(AzureMgmtTestCase):
         super(AzureKeyVaultTestCase, self).setUp()
 
         def mock_key_vault_auth_base(self, request):
-            challenge = HttpBearerChallenge(request.url, 'Bearer authorization=fake-url,resource=https://vault.azure.net')
-            self.set_authorization_header(request, challenge)
+            challenge = HttpChallenge(request.url, 'Bearer authorization=fake-url,resource=https://vault.azure.net')
+            security = self._get_message_security(request, challenge)
             return request
 
         self.fake_settings = fake_settings
@@ -189,7 +189,7 @@ class AzureKeyVaultTestCase(AzureMgmtTestCase):
                                              object_id=self.settings.CLIENT_OID,
                                              permissions=permissions or self.default_permissions)]
         properties = VaultProperties(tenant_id=self.settings.TENANT_ID,
-                                     sku=Sku(sku or SkuName.premium.value),
+                                     sku=Sku(name=sku or SkuName.premium.value),
                                      access_policies=access_policies,
                                      vault_uri=None,
                                      enabled_for_deployment=enabled_for_deployment,
@@ -199,10 +199,7 @@ class AzureKeyVaultTestCase(AzureMgmtTestCase):
         parameters = VaultCreateOrUpdateParameters(location='westus',
                                                    properties=properties)
 
-        vault = self.mgmt_client.vaults.create_or_update(group_name, vault_name, parameters)
-
-        if not self.is_playback():
-            self.sleep(10)
+        vault = self.mgmt_client.vaults.create_or_update(group_name, vault_name, parameters).result()
 
         return vault
 

@@ -24,5 +24,6 @@ class ApplicationGatewayBackendHealth(Model):
         'backend_address_pools': {'key': 'backendAddressPools', 'type': '[ApplicationGatewayBackendHealthPool]'},
     }
 
-    def __init__(self, backend_address_pools=None):
-        self.backend_address_pools = backend_address_pools
+    def __init__(self, **kwargs):
+        super(ApplicationGatewayBackendHealth, self).__init__(**kwargs)
+        self.backend_address_pools = kwargs.get('backend_address_pools', None)

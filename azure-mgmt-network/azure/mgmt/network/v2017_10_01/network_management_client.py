@@ -15,7 +15,8 @@ from msrestazure import AzureConfiguration
 from .version import VERSION
 from msrest.pipeline import ClientRawResponse
 from msrestazure.azure_exceptions import CloudError
-from msrestazure.azure_operation import AzureOperationPoller
+from msrest.polling import LROPoller, NoPolling
+from msrestazure.polling.arm_polling import ARMPolling
 import uuid
 from .operations.application_gateways_operations import ApplicationGatewaysOperations
 from .operations.application_security_groups_operations import ApplicationSecurityGroupsOperations
@@ -39,6 +40,7 @@ from .operations.security_rules_operations import SecurityRulesOperations
 from .operations.default_security_rules_operations import DefaultSecurityRulesOperations
 from .operations.network_watchers_operations import NetworkWatchersOperations
 from .operations.packet_captures_operations import PacketCapturesOperations
+from .operations.connection_monitors_operations import ConnectionMonitorsOperations
 from .operations.operations import Operations
 from .operations.public_ip_addresses_operations import PublicIPAddressesOperations
 from .operations.route_filters_operations import RouteFiltersOperations
@@ -140,6 +142,8 @@ class NetworkManagementClient(object):
     :vartype network_watchers: azure.mgmt.network.v2017_10_01.operations.NetworkWatchersOperations
     :ivar packet_captures: PacketCaptures operations
     :vartype packet_captures: azure.mgmt.network.v2017_10_01.operations.PacketCapturesOperations
+    :ivar connection_monitors: ConnectionMonitors operations
+    :vartype connection_monitors: azure.mgmt.network.v2017_10_01.operations.ConnectionMonitorsOperations
     :ivar operations: Operations operations
     :vartype operations: azure.mgmt.network.v2017_10_01.operations.Operations
     :ivar public_ip_addresses: PublicIPAddresses operations
@@ -233,6 +237,8 @@ class NetworkManagementClient(object):
             self._client, self.config, self._serialize, self._deserialize)
         self.packet_captures = PacketCapturesOperations(
             self._client, self.config, self._serialize, self._deserialize)
+        self.connection_monitors = ConnectionMonitorsOperations(
+            self._client, self.config, self._serialize, self._deserialize)
         self.operations = Operations(
             self._client, self.config, self._serialize, self._deserialize)
         self.public_ip_addresses = PublicIPAddressesOperations(
@@ -287,7 +293,7 @@ class NetworkManagementClient(object):
         api_version = "2017-10-01"
 
         # Construct URL
-        url = '/subscriptions/{subscriptionId}/providers/Microsoft.Network/locations/{location}/CheckDnsNameAvailability'
+        url = self.check_dns_name_availability.metadata['url']
         path_format_arguments = {
             'location': self._serialize.url("location", location, 'str'),
             'subscriptionId': self._serialize.url("self.config.subscription_id", self.config.subscription_id, 'str')
@@ -311,7 +317,7 @@ class NetworkManagementClient(object):
 
         # Construct and send request
         request = self._client.get(url, query_parameters)
-        response = self._client.send(request, header_parameters, **operation_config)
+        response = self._client.send(request, header_parameters, stream=False, **operation_config)
 
         if response.status_code not in [200]:
             exp = CloudError(response)
@@ -328,3 +334,4 @@ class NetworkManagementClient(object):
             return client_raw_response
 
         return deserialized
+    check_dns_name_availability.metadata = {'url': '/subscriptions/{subscriptionId}/providers/Microsoft.Network/locations/{location}/CheckDnsNameAvailability'}

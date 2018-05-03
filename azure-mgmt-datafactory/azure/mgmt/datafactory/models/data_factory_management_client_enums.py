@@ -39,6 +39,7 @@ class ParameterType(Enum):
     float_enum = "Float"
     bool_enum = "Bool"
     array = "Array"
+    secure_string = "SecureString"
 
 
 class DependencyCondition(Enum):
@@ -285,6 +286,7 @@ class WebActivityMethod(Enum):
     get = "GET"
     post = "POST"
     put = "PUT"
+    delete = "DELETE"
 
 
 class CassandraSourceReadConsistencyLevels(Enum):
@@ -309,6 +311,18 @@ class StoredProcedureParameterType(Enum):
     guid = "Guid"
     boolean = "Boolean"
     date_enum = "Date"
+
+
+class SalesforceSourceReadBehavior(Enum):
+
+    query = "Query"
+    query_all = "QueryAll"
+
+
+class SSISExecutionRuntime(Enum):
+
+    x64 = "x64"
+    x86 = "x86"
 
 
 class HDInsightActivityDebugInfoOption(Enum):
@@ -393,6 +407,18 @@ class IntegrationRuntimeSsisCatalogPricingTier(Enum):
     standard = "Standard"
     premium = "Premium"
     premium_rs = "PremiumRS"
+
+
+class IntegrationRuntimeLicenseType(Enum):
+
+    base_price = "BasePrice"
+    license_included = "LicenseIncluded"
+
+
+class IntegrationRuntimeEdition(Enum):
+
+    standard = "Standard"
+    enterprise = "Enterprise"
 
 
 class IntegrationRuntimeAuthKeyName(Enum):

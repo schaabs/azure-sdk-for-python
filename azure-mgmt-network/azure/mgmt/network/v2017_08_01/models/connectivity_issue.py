@@ -47,7 +47,8 @@ class ConnectivityIssue(Model):
         'context': {'key': 'context', 'type': '[{str}]'},
     }
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super(ConnectivityIssue, self).__init__(**kwargs)
         self.origin = None
         self.severity = None
         self.type = None

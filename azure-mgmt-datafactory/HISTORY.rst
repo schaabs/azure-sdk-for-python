@@ -3,6 +3,37 @@
 Release History
 ===============
 
+0.6.0 (2018-03-22)
+++++++++++++++++++
+
+- Added new AzureDatabricks LinkedService and DatabricksNotebook Activity
+- Added headNodeSize and dataNodeSize properties in HDInsightOnDemand LinkedService
+- Added LinkedService, Dataset, CopySource for SalesforceMarketingCloud
+- Added support for SecureOutput on all activities
+- Added new BatchCount property on ForEach activity which controls how many concurrent activities to run
+- Added DELETE method for Web Activity
+- Added new Filter Activity
+- Added Linked Service Parameters support
+
+0.5.0 (2018-02-16)
+++++++++++++++++++
+
+- Enable AAD auth via service principal and management service identity for Azure SQL DB/DW linked service types
+- Support integration runtime sharing across subscription and data factory
+- Enable Azure Key Vault for all compute linked service
+- Add SAP ECC Source
+- GoogleBigQuery support clientId and clientSecret for UserAuthentication
+- Add LinkedService, Dataset, CopySource for Vertica and Netezza
+
+0.4.0 (2018-02-02)
+++++++++++++++++++
+
+**Features**
+
+- Add readBehavior to Salesforce Source
+- Enable Azure Key Vault support for all data store linked services
+- Add license type property to Azure SSIS integration runtime
+
 0.3.0 (2017-12-12)
 ++++++++++++++++++
 
