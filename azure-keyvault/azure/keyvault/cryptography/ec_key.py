@@ -27,6 +27,7 @@ _curve_to_default_algo = {
     'SECP256K1': Ecdsa256.name(),
 }
 
+
 class EllipticCurveKey(Key):
     def __init__(self, kid=None, curve=None):
         self._kid = kid or str(uuid.uuid4())

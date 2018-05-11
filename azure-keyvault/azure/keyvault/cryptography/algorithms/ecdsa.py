@@ -2,18 +2,19 @@ from ..algorithm import Algorithm, SignatureAlgorithm
 from ..transform import SignatureTransform
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import utils
 
 
 class _EcdsaSignatureTransform(SignatureTransform):
-    def __init__(self, key, hash_algo):
+    def __init__(self, key, hash_algorithm):
         self._key = key
-        self._hash_algo = hash_algo
+        self._hash_algorithm = hash_algorithm
 
-    def sign(self, data):
-        return self._key.sign(data, ec.ECDSA(self._hash_algo))
+    def sign(self, digest):
+        return self._key.sign(digest, ec.ECDSA(utils.Prehashed(self._hash_algorithm)))
 
-    def verify(self, signature, data):
-        return self._key.verify(signature, data, ec.ECDSA(self._hash_algo))
+    def verify(self, digest, signature):
+        return self._key.verify(signature, digest, utils.Prehashed(self._hash_algorithm))
 
     def dispose(self):
         self._key = None
@@ -21,30 +22,29 @@ class _EcdsaSignatureTransform(SignatureTransform):
 
 
 class _Ecdsa(SignatureAlgorithm):
-    _hash_algo=None
 
     def create_signature_transform(self, key):
-        return _EcdsaSignatureTransform(key, self._hash_algo)
+        return _EcdsaSignatureTransform(key, self.default_hash_algorithm)
 
 
 class Ecdsa256(_Ecdsa):
     _name = 'ECDSA256'
-    _hash_algo=hashes.SHA256()
+    _default_hash_algorithm = hashes.SHA256()
 
 
 class Es256(_Ecdsa):
     _name = 'ES256'
-    _hash_algo=hashes.SHA256()
+    _default_hash_algorithm = hashes.SHA256()
 
 
 class Es384(_Ecdsa):
     _name = 'ES384'
-    _hash_algo=hashes.SHA384()
+    _default_hash_algorithm = hashes.SHA384()
 
 
 class Es512(_Ecdsa):
     _name = 'ES512'
-    _hash_algo=hashes.SHA512()
+    _default_hash_algorithm = hashes.SHA512()
 
 
 Ecdsa256.register()

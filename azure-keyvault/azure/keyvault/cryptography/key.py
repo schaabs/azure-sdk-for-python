@@ -65,6 +65,14 @@ class Key(with_metaclass(ABCMeta, object)):
     def verify(self, digest, signature, **kwargs):
         raise NotImplementedError()
 
+    @abstractmethod
+    def sign_message(self, message, **kwargs):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def verify_message(self, message, signature, **kwargs):
+        raise NotImplementedError()
+
     def _get_algorithm(self, op, **kwargs):
         default_algorithm, supported_alogrithms = {
             'encrypt': (self.default_encryption_algorithm, self.supported_encryption_algorithms),

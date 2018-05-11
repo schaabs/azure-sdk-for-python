@@ -170,18 +170,18 @@ class RsaKey(Key):
         decryptor = algorithm.create_decryptor(self._rsa_impl)
         return decryptor.transform(cipher_text, **kwargs)
 
-    def sign(self, data, **kwargs):
+    def sign(self, digest, **kwargs):
         if not self.is_private_key():
             raise NotImplementedError('The current RsaKey does not support sign')
 
         algorithm = self._get_algorithm('sign', **kwargs)
         signer = algorithm.create_signature_transform(self._rsa_impl)
-        return signer.sign(data)
+        return signer.sign(digest)
 
-    def verify(self, signature, data, **kwargs):
+    def verify(self, digest, signature, **kwargs):
         algorithm = self._get_algorithm('verify', **kwargs)
         signer = algorithm.create_signature_transform(self._rsa_impl)
-        return signer.verify(signature, data)
+        return signer.verify(signature, digest)
 
     def wrap_key(self, key, **kwargs):
         algorithm = self._get_algorithm('wrapKey', **kwargs)

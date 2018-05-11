@@ -47,9 +47,28 @@ class AuthenticatedCryptoTransform(with_metaclass(ABCMeta, object)):
 class SignatureTransform(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
-    def sign(self, data):
+    def sign(self, digest):
         raise NotImplementedError()
 
     @abstractmethod
-    def verify(self, signature, data):
+    def verify(self, digest, signature):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def sign_message(self, message):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def verify_message(self, message, signature):
+        raise NotImplementedError()
+
+
+class DigestTransform(with_metaclass(ABCMeta, object)):
+
+    @abstractmethod
+    def update(self, data):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def finalize(self, data):
         raise NotImplementedError()

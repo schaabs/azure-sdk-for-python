@@ -60,7 +60,19 @@ class AuthenticatedSymmetricEncryptionAlgorithm(EncryptionAlgorithm):
 
 
 class SignatureAlgorithm(Algorithm):
+    _default_hash_algoritm = None
+
+    @property
+    def default_hash_algorithm(self):
+        return self._default_hash_algoritm
 
     @abstractmethod
     def create_signature_transform(self, key):
+        raise NotImplementedError()
+
+
+class HashAlgorithm(Algorithm):
+
+    @abstractmethod
+    def create_digest(self):
         raise NotImplementedError()
