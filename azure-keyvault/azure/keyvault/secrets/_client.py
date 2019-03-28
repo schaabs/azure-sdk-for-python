@@ -2,7 +2,7 @@ import uuid
 
 from azure.core.configuration import Configuration
 from azure.core.pipeline.policies import UserAgentPolicy, HeadersPolicy, RetryPolicy, \
-    RedirectPolicy, CredentialsPolicy, HTTPPolicy
+    RedirectPolicy, CredentialsPolicy, HTTPPolicy, NetworkTraceLoggingPolicy, ProxyPolicy
 from azure.core.pipeline.transport import RequestsTransport, HttpRequest
 from azure.core.pipeline import Pipeline
 from azure.core.exceptions import ClientRequestError
@@ -20,11 +20,20 @@ class SecretClient:
 
     @staticmethod
     def create_config(**kwargs):
+        # config = Configuration(**kwargs)
+        # config.user_agent = UserAgentPolicy('SecretClient', **kwargs)
+        # config.headers = None
+        # config.retry = RetryPolicy(**kwargs)
+        # config.redirect = RedirectPolicy(**kwargs)
+        # return config
         config = Configuration(**kwargs)
-        config.user_agent = UserAgentPolicy('SecretClient', **kwargs)
-        config.headers = None
-        config.retry = RetryPolicy(**kwargs)
-        config.redirect = RedirectPolicy(**kwargs)
+        config.headers_policy = HeadersPolicy({}, **kwargs)
+        config.user_agent_policy = UserAgentPolicy("SecretClient", **kwargs)
+        config.retry_policy = RetryPolicy(**kwargs)
+        config.redirect_policy = RedirectPolicy(**kwargs)
+        config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
+        config.proxy_policy = ProxyPolicy(**kwargs)
+        config.transport = kwargs.get('transport', RequestsTransport)
         return config
 
     def __init__(self, credentials, vault_url, config=None, **kwargs):
@@ -43,14 +52,15 @@ class SecretClient:
 
         self.vault_url = vault_url
         config = config or SecretClient.create_config(**kwargs)
-        transport = RequestsTransport(config.connection)
+        # transport = RequestsTransport(config.connection)
+        transport = config.get_transport(**kwargs)
         policies = [
-            config.user_agent,
-            config.headers,
+            config.user_agent_policy,
+            config.headers_policy,
             _BearerTokenCredentialPolicy(credentials),
-            config.redirect,
-            config.retry,
-            config.logging,
+            config.redirect_policy,
+            config.retry_policy,
+            config.logging_policy,
         ]
         client_models = {
             'Secret': Secret,
@@ -126,7 +136,9 @@ class SecretClient:
 
         request_body = self._serialize.body(secret, 'Secret')
 
-        request = HttpRequest('PUT', url, headers, data=request_body)
+        request = HttpRequest('PUT', url, headers)
+
+        request.set_json_body(request_body)
 
         request.format_parameters(query_parameters)
 
@@ -170,7 +182,9 @@ class SecretClient:
 
         request_body = self._serialize.body(secret, 'Secret')
 
-        request = HttpRequest('PATCH', url, headers, data=request_body)
+        request = HttpRequest('PATCH', url, headers)
+
+        request.set_json_body(request_body)
 
         request.format_parameters(query_parameters)
 
@@ -334,8 +348,10 @@ class SecretClient:
 
         request_body = self._serialize.body(backup, '_BackupResult')
 
-        request = HttpRequest('POST', url, headers, data=request_body)
+        request = HttpRequest('POST', url, headers)
 
+        request.set_json_body(request_body)
+        
         request.format_parameters(query_parameters)
 
         response = self._pipeline.run(request, **kwargs).http_response
