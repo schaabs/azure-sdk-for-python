@@ -35,8 +35,9 @@ CONTENT_CHUNK_SIZE = 10 * 1024
 
 
 class AioHttpContext(object):
-    def __init__(self, session):
+    def __init__(self, session, transport):
         self.session = session
+        self.transport = transport
 
 
 class AioHttpTransport(AsyncHttpTransport):
@@ -59,9 +60,10 @@ class AioHttpTransport(AsyncHttpTransport):
         pass  # configure sesison
 
     def build_context(self):
-        # type: () -> RequestsContext
+        # type: () -> AioHttpContext
         return AioHttpContext(
             session=self.session,
+            transport=self,
         )
 
     async def send(self, request: HttpRequest, **config: Any) -> AsyncHttpResponse:
@@ -70,9 +72,22 @@ class AioHttpTransport(AsyncHttpTransport):
         Will pre-load the body into memory to be available with a sync method.
         pass stream=True to avoid this behavior.
         """
+        # TODO SSL config
+        # ssl_ctx = None
+        # if self.config.connection.verify not in (True, False):
+        #    import ssl
+         #   ssl_ctx = ssl.create_default_context(cafile=self.config.connection.verify)
+
         result = await self.session.request(
             request.method,
             request.url,
+            headers=request.headers,
+            data=request.data,
+            # files=request.files,  # TODO: What is aiohttp equivalent...?
+            # verify=config.get('connection_verify', self.config.connection.verify),
+            timeout=config.get('connection_timeout', self.config.connection.timeout),
+            # cert=config.get('connection_cert', self.config.connection.cert),
+            allow_redirects=False,
             **config
         )
         response = AioHttpTransportResponse(request, result)
@@ -101,9 +116,6 @@ class AioHttpTransportResponse(AsyncHttpResponse):
     async def load_body(self) -> None:
         """Load in memory the body, so it could be accessible from sync methods."""
         self._body = await self.internal_response.read()
-
-    def raise_for_status(self):
-        self.internal_response.raise_for_status()
 
     def stream_download(self, chunk_size: Optional[int] = None, callback: Optional[Callable] = None) -> AsyncIterator[bytes]:
         """Generator for streaming request body data.

@@ -54,91 +54,95 @@ def raise_with_traceback(exception, message="", *args, **kwargs):
         raise error
 
 
-class ClientException(Exception):
-    """Base exception for all Client Runtime exceptions."""
+class AzureError(Exception):
+    """Base exception for all errors."""
 
-    def __init__(self, message, inner_exception=None, *args, **kwargs):
-        # type: (str, Any, str, str) -> None
-        self.inner_exception = inner_exception
-        _LOGGER.debug(message)
-        super(ClientException, self).__init__(message, *args, **kwargs)  # type: ignore
+    def __init__(self, message, *args, **kwargs):
+        self.inner_exception = kwargs.get('error')
+        self.response = kwargs.get('response')
+        self.exc_type, self.exc_value, self.exc_traceback = sys.exc_info()
+        self.exc_type = self.exc_type.__name__ if self.exc_type else type(self.inner_exception)
+        self.exc_msg = "{}, {}: {}".format(message, self.exc_type, self.exc_value)  # type: ignore
+        self.message = str(message)
+        super(AzureError, self).__init__(self.message, *args)
+
+    def raise_with_traceback(self):
+        try:
+            raise super(AzureError, self).with_traceback(self.exc_traceback)
+        except AttributeError:
+            self.__traceback__ = self.exc_traceback
+            raise self
 
 
-class SerializationError(ClientException):
-    """Error raised during request serialization."""
-    pass
+class AzureLibraryError(AzureError):
+    """An error occurred in the client while processing the pipeline."""
 
 
-class DeserializationError(ClientException):
+class AzureLibraryResponse(AzureLibraryError):
+    """An error occurred in the client while processing the response."""
+
+
+class AzureLibraryRequest(AzureLibraryError):
+    """An error occurred in the client while building the request."""
+
+
+class DecodeError(AzureLibraryResponse):
     """Error raised during response deserialization."""
-    pass
 
 
-class ValidationError(ClientException):
-    """Request parameter validation failed."""
-
-    _messages = {
-        "min_length": "must have length greater than {!r}.",
-        "max_length": "must have length less than {!r}.",
-        "minimum": "must be greater than {!r}.",
-        "maximum": "must be less than {!r}.",
-        "minimum_ex": "must be equal to or greater than {!r}.",
-        "maximum_ex": "must be equal to or less than {!r}.",
-        "min_items": "must contain at least {!r} items.",
-        "max_items": "must contain at most {!r} items.",
-        "pattern": "must conform to the following pattern: {!r}.",
-        "unique": "must contain only unique items.",
-        "multiple": "must be a multiple of {!r}.",
-        "required": "can not be None.",
-        "type": "must be of type {!r}"
-    }
-
-    def __init__(self, rule, target, value, *args, **kwargs):
-        # type: (str, str, str, str, str) -> None
-        self.rule = rule
-        self.target = target
-        message = "Parameter {!r} ".format(target)
-        reason = self._messages.get(
-            rule, "failed to meet validation requirement.")
-        message += reason.format(value)
-        super(ValidationError, self).__init__(message, *args, **kwargs)
+class ServiceRequestError(AzureError):
+    """An error occurred while attempt to make a request to the service."""
 
 
-class ClientRequestError(ClientException):
-    """Client request failed."""
-    pass
+class ConnectionError(ServiceRequestError):
+    """An error occurred while attempting to establish the connection.
+    These errors are safe to retry."""
 
 
-class MaxRetryError(ClientException):
-
-    def __init__(self, history, *args, **kwargs):
-        self.history = history
-        message = "Reached maximum retry attempts."
-        super(MaxRetryError, self).__init__(message, *args, **kwargs)
+class ConnectionTimeoutError(ConnectionError):
+    """The request timed out while trying to connect to the remote server.
+    These errors are safe to retry."""
 
 
-class MaxRedirectError(ClientException):
+class ConnectionReadError(ServiceRequestError):
+    """An error occurred during the request/response.
+    These errors may not be safe to retry."""
+
+
+class ReadTimeoutError(ConnectionReadError):
+    """The server did not send any data in the allotted amount of time.
+    These errors may not be safe to retry."""
+
+
+class ClientRequestError(ServiceRequestError):
+    """An error response with status code 4xx.
+    This will not be raised directly by the Azure core pipeline."""
+
+
+class ResourceExistsError(ClientRequestError):
+    """An error response with status code 4xx.
+    This will not be raised directly by the Azure core pipeline."""
+
+
+class ClientAuthenticationError(ClientRequestError):
+    """An error response with status code 4xx.
+    This will not be raised directly by the Azure core pipeline."""
+
+
+class ResourceModifiedError(ClientRequestError):
+    """An error response with status code 4xx.
+    This will not be raised directly by the Azure core pipeline."""
+
+
+class ServerError(ServiceRequestError):
+    """An error response with status code 5xx.
+    This will not be raised directly by the Azure core pipeline."""
+
+
+class TooManyRedirectsError(ServiceRequestError):
+    """Reached the maximum number of redirect attempts."""
 
     def __init__(self, history, *args, **kwargs):
         self.history = history
         message = "Reached maximum redirect attempts."
-        super(MaxRetryError, self).__init__(message, *args, **kwargs)
-
-
-class ConnectionError(ClientException):
-    pass
-
-
-class AuthenticationError(ClientException):
-    """Client request failed to authenticate."""
-    pass
-
-
-class TokenExpiredError(AuthenticationError):
-    """OAuth token expired, request failed."""
-    pass
-
-
-class TokenInvalidError(AuthenticationError):
-    """OAuth token invalid, request failed."""
-    pass
+        super(TooManyRedirectsError, self).__init__(message, *args, **kwargs)

@@ -32,14 +32,14 @@ import logging
 import threading
 from typing import TYPE_CHECKING, List, Callable, Iterator, Any, Union, Dict, Optional  # pylint: disable=unused-import
 import warnings
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 from azure.core.exceptions import (
-    TokenExpiredError,
-    TokenInvalidError,
-    AuthenticationError,
     ClientRequestError,
-    MaxRedirectError,
-    raise_with_traceback
+    TooManyRedirectsError
 )
 
 from .base import HTTPPolicy, RequestHistory
@@ -49,65 +49,82 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class RedirectPolicy(HTTPPolicy):
+    """A redirect policy"""
 
-    REDIRECT_STATUSES = [301, 302, 303, 307, 308]
+    REDIRECT_STATUSES = frozenset([301, 302, 303, 307, 308])
 
     REDIRECT_HEADERS_BLACKLIST = frozenset(['Authorization'])
 
     def __init__(self, **kwargs):
-        self.redirect_max = kwargs.pop('redirect_max', 30)
-        remove_headers = kwargs.pop('redirect_remove_headers', set())
-        self.remove_headers_on_redirect = remove_headers.union(self.REDIRECT_HEADERS_BLACKLIST)
-        redirect_status = kwargs.pop('redirect_on_status_codes', [])
-        self.redirect_on_status_codes = set(redirect_status + self.REDIRECT_STATUSES)
-        self.raise_on_redirect = True
-        self.history = []
+        self.allow = kwargs.get('redirects_allow', True)
+        self.max_redirects = kwargs.get('redirect_max', 30)
+
+        remove_headers = set(kwargs.get('redirect_remove_headers', []))
+        self._remove_headers_on_redirect = remove_headers.union(self.REDIRECT_HEADERS_BLACKLIST)
+        redirect_status = set(kwargs.get('redirect_on_status_codes', []))
+        self._redirect_on_status_codes = redirect_status.union(self.REDIRECT_STATUSES)
 
     @classmethod
     def no_redirects(cls):
-        return cls(redirect_max=0)
+        return cls(redirects_allow=False)
+
+    def configure_redirects(self, **kwargs):
+        return {
+            'allow': kwargs.pop("redirects_allow", self.max_redirects),
+            'redirects': kwargs.pop("redirect_max", self.max_redirects),
+            'history': []
+        }
 
     def get_redirect_location(self, response):
-        """
-        Should we redirect and where to?
+        """Should we redirect and where to?
+
         :returns: Truthy redirect location string if we got a redirect status
             code and valid location. ``None`` if redirect status and no
             location. ``False`` if not a redirect status code.
         """
-        if response.http_response.status_code in self.redirect_on_status_codes:
-            return self.headers.get('location')
+        if response.http_response.status_code in self._redirect_on_status_codes \
+                and response.http_request.method in ['GET', 'HEAD']:
+            return response.http_response.headers.get('location')
 
         return False
 
-    def increment(self, response):
-        """ Return a new Retry object with incremented retry counters.
+    def increment(self, settings, response, redirect_location):
+        """Increment the redirect attempts for this request.
 
-        :param response: A response object, or None, if the server did not
-            return a response.
-        :type response: :class:`~urllib3.response.HTTPResponse`
-        :param Exception error: An error encountered during the request, or
-            None if the response was received successfully.
+        :param response: A pipeline response object.
+        :param redirect_location: The redirected endpoint.
 
-        :return: A new ``Retry`` object.
+        :return: Whether further redirect attempts are remaining.
         """
-        # Redirect retry?
-        if redirect is not None:
-            redirect -= 1
-        cause = 'too many redirects'
-        redirect_location = response.get_redirect_location()
-        status = response.status
-        self.history.append(RequestHistory(response.http_request, http_response=response.http_response))
-
-        return self.redirect_max > 0
+        # TODO: Revise some of the logic here.
+        settings['redirects'] -= 1
+        settings['history'].append(RequestHistory(response.http_request, http_response=response.http_response))
+        
+        redirected = urlparse(redirect_location)
+        if not redirected.netloc:
+            base_url = urlparse(response.http_request.url)
+            response.http_request.url = "{}://{}/{}".format(
+                base_url.scheme,
+                base_url.netloc,
+                redirect_location.lstrip('/'))
+        else:
+            response.http_request.url = redirect_location
+        if response.http_response.status_code == 303:
+            response.http_request.method = 'GET'
+        for non_redirect_header in self._remove_headers_on_redirect:
+            response.http_request.headers.pop(non_redirect_header, None)
+        return settings['redirects'] > 0 or not settings['allow']
 
     def send(self, request, **kwargs):
         retryable = True
+        redirect_settings = self.configure_redirects(**kwargs)
         while retryable:
             response = self.next.send(request, **kwargs)
-            if self.get_redirect_location(response):
-                retryable = self.increment(response=response)
+            redirect_location = self.get_redirect_location(response)
+            if redirect_location:
+                retryable = self.increment(redirect_settings, response, redirect_location)
+                request.http_request = response.http_request
                 continue
-            response.history = self.history
             return response
 
-        raise MaxRedirectError(retry_history=self.history)
+        raise TooManyRedirectsError(redirect_settings['history'])

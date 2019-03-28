@@ -27,6 +27,8 @@ from __future__ import absolute_import
 import contextlib
 import requests
 import threading
+import urllib3
+from urllib3.util.retry import Retry
 
 from .base import (
     HttpTransport,
@@ -34,11 +36,12 @@ from .base import (
     _HttpResponseBase
 )
 
+from azure.core.configuration import Configuration
 from azure.core.exceptions import (
-    ClientRequestError,
-    TokenExpiredError,
-    TokenInvalidError,
-    AuthenticationError,
+    ServiceRequestError,
+    ConnectionError,
+    ConnectionReadError,
+    ReadTimeoutError,
     raise_with_traceback
 )
 
@@ -46,8 +49,9 @@ from azure.core.exceptions import (
 CONTENT_CHUNK_SIZE = 10 * 1024
 
 class RequestsContext(object):
-    def __init__(self, session):
+    def __init__(self, session, transport):
         self.session = session
+        self.transport = transport
 
 
 class _RequestsTransportResponseBase(_HttpResponseBase):
@@ -65,9 +69,6 @@ class _RequestsTransportResponseBase(_HttpResponseBase):
         if encoding:
             self.internal_response.encoding = encoding
         return self.internal_response.text
-
-    def raise_for_status(self):
-        self.internal_response.raise_for_status()
 
 
 class RequestsTransportResponse(_RequestsTransportResponseBase, HttpResponse):
@@ -107,7 +108,7 @@ class RequestsTransport(HttpTransport):
     def __init__(self, configuration=None, session=None):
         # type: (Optional[requests.Session]) -> None
         self._session_mapping = threading.local()
-        self.config = configuration
+        self.config = configuration or Configuration()
         self.session = session or requests.Session()
 
     def __enter__(self):
@@ -123,7 +124,12 @@ class RequestsTransport(HttpTransport):
 
         This is initialization I want to do once only on a session.
         """
-        pass  # TODO: Apply configuration
+        if self.config.proxy_policy:
+            session.trust_env = self.config.proxy_policy.use_env_settings
+        disable_retries = Retry(total=False, redirect=False, raise_on_status=False)
+        adapter = requests.adapters.HTTPAdapter(max_retries=disable_retries)
+        for p in self._protocols:
+            session.mount(p, adapter)
 
     @property  # type: ignore
     def session(self):
@@ -143,6 +149,7 @@ class RequestsTransport(HttpTransport):
         # type: () -> RequestsContext
         return RequestsContext(
             session=self.session,
+            transport=self,
         )
 
     def close(self):
@@ -158,23 +165,38 @@ class RequestsTransport(HttpTransport):
 
         :param HttpRequest request: The request object to be sent.
         """
+        response = None
+        error = None
+        if self.config.proxy_policy and 'proxies' not in kwargs:
+            kwargs['proxies'] = self.config.proxy_policy.proxies
         try:
             response = self.session.request(
                 request.method,
                 request.url,
                 headers=request.headers,
-				# request data has already been serialzied in HttpRequest
-				# TODO: possibly need to distinguish between data, json, xml, etc.
-                json=request.data,
+                data=request.data,
                 files=request.files,
-                verify=self.config.verify,
-                timeout=self.config.timeout,
-                cert=self.config.cert,
+                verify=kwargs.get('connection_verify', self.config.connection.verify),
+                timeout=kwargs.get('connection_timeout', self.config.connection.timeout),
+                cert=kwargs.get('connection_cert', self.config.connection.cert),
                 allow_redirects=False,
                 **kwargs)
 
+        except urllib3.exceptions.NewConnectionError as err:
+            error = ConnectionError(err, error=err)
+        except requests.exceptions.ReadTimeout as err:
+            error = ReadTimeoutError(err, error=err)
+        except requests.exceptions.ConnectionError as err:
+            if err.args and isinstance(err.args[0], urllib3.exceptions.ProtocolError):
+                error = ConnectionReadError(err, error=err)
+            else:
+                error = ConnectionError(err, error=err)
         except requests.RequestException as err:
-            msg = "Error occurred in request."
-            raise_with_traceback(ClientRequestError, msg, err)
+            error = ServiceRequestError(err, error=err)
+        finally:
+            if not self.config.connection.keep_alive and (not response or not kwargs['stream']):
+                self.session.close()
 
+        if error:
+            raise error
         return RequestsTransportResponse(request, response)

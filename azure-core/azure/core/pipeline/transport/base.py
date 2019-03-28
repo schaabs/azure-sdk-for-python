@@ -28,6 +28,7 @@ import abc
 import json
 import logging
 import os
+import time
 try:
     from urlparse import urlparse
 except ImportError:
@@ -41,38 +42,13 @@ import xml.etree.ElementTree as ET
 from requests.structures import CaseInsensitiveDict
 
 from typing import TYPE_CHECKING, Generic, TypeVar, cast, IO, List, Union, Any, Mapping, Dict, Optional, Tuple, Callable, Iterator  # pylint: disable=unused-import
-from azure.core.exceptions import ClientRequestError
+from azure.core.exceptions import ClientRequestError, ServerError
 from azure.core.pipeline import ABC, AbstractContextManager
 
 HTTPResponseType = TypeVar("HTTPResponseType")
 HTTPRequestType = TypeVar("HTTPRequestType")
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class TransportConfiguration(object):
-    """HTTP transport connection configuration settings."""
-
-    def __init__(self, **kwargs):
-        self.timeout = kwargs.pop('connection_timeout', 100)
-        self.verify = kwargs.pop('connection_verify', True)
-        self.cert = kwargs.pop('connection_cert', None)
-        self.data_block_size = kwargs.pop('connection_data_block_size', 4096)
-        self.keep_alive = kwargs.pop('connection_keep_alive', False)
-
-    def __iter__(self):
-        dict_values = dict(self.__dict__)
-        for attr, value in dict_values.items():
-            yield "connection_" + attr, value
-
-    def __call__(self):
-        # type: () -> Dict[str, Union[str, int]]
-        """Return configuration to be applied to connection."""
-        debug = "Configuring request: timeout=%r, verify=%r, cert=%r"
-        _LOGGER.debug(debug, self.timeout, self.verify, self.cert)
-        return {'timeout': self.timeout,
-                'verify': self.verify,
-                'cert': self.cert}
 
 
 class HttpTransport(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPResponseType]):
@@ -96,16 +72,14 @@ class HttpTransport(AbstractContextManager, ABC, Generic[HTTPRequestType, HTTPRe
         """
         return None
 
+    def sleep(self, duration):
+        time.sleep(duration)
+
 
 class HttpRequest(object):
     """Represents a HTTP request.
 
     URL can be given without query parameters, to be added later using "format_parameters".
-
-    Instance can be created without data, to be added later using "add_content"
-
-    Instance can be created without files, to be added later using "add_formdata"
-
     :param str method: HTTP method (GET, HEAD, etc.)
     :param str url: At least complete scheme/host/path
     :param dict[str,str] headers: HTTP headers
@@ -133,49 +107,6 @@ class HttpRequest(object):
     def body(self, value):
         self.data = value
 
-    def format_parameters(self, params):
-        # type: (Dict[str, str]) -> None
-        """Format parameters into a valid query string.
-        It's assumed all parameters have already been quoted as
-        valid URL strings.
-
-        :param dict params: A dictionary of parameters.
-        """
-        query = urlparse(self.url).query
-        if query:
-            self.url = self.url.partition('?')[0]
-            existing_params = {
-                p[0]: p[-1]
-                for p in [p.partition('=') for p in query.split('&')]
-            }
-            params.update(existing_params)
-        query_params = ["{}={}".format(k, v) for k, v in params.items()]
-        query = '?' + '&'.join(query_params)
-        self.url = self.url + query
-
-    def add_content(self, data):
-        # type: (Optional[Union[Dict[str, Any], ET.Element]]) -> None
-        """Add a body to the request.
-
-        :param data: Request body data, can be a json serializable
-         object (e.g. dictionary) or a generator (e.g. file data).
-        """
-        if data is None:
-            return
-
-        if isinstance(data, ET.Element):
-            bytes_data = ET.tostring(data, encoding="utf8")
-            self.headers['Content-Length'] = str(len(bytes_data))
-            self.data = bytes_data
-            return
-
-        # By default, assume JSON
-        try:
-            self.data = json.dumps(data)
-            self.headers['Content-Length'] = str(len(self.data))
-        except TypeError:
-            self.data = data
-
     @staticmethod
     def _format_data(data):
         # type: (Union[str, IO]) -> Union[Tuple[None, str], Tuple[Optional[str], IO, str]]
@@ -196,25 +127,64 @@ class HttpRequest(object):
             return (data_name, data, "application/octet-stream")
         return (None, cast(str, data))
 
-    def add_formdata(self, content=None):
-        # type: (Optional[Dict[str, str]]) -> None
-        """Add data as a multipart form-data request to the request.
+    def format_parameters(self, params):
+        # type: (Dict[str, str]) -> None
+        """Format parameters into a valid query string.
+        It's assumed all parameters have already been quoted as
+        valid URL strings.
 
-        We only deal with file-like objects or strings at this point.
-        The requests is not yet streamed.
-
-        :param dict headers: Any headers to add to the request.
-        :param dict content: Dictionary of the fields of the formdata.
+        :param dict params: A dictionary of parameters.
         """
-        if content is None:
-            content = {}
+        query = urlparse(self.url).query
+        if query:
+            self.url = self.url.partition('?')[0]
+            existing_params = {
+                p[0]: p[-1]
+                for p in [p.partition('=') for p in query.split('&')]
+            }
+            params.update(existing_params)
+        query_params = ["{}={}".format(k, v) for k, v in params.items()]
+        query = '?' + '&'.join(query_params)
+        self.url = self.url + query
+
+    def set_xml_body(self, data):
+        """Set an XML element tree as the body of the request."""
+        if data is None:
+            self.data = None
+        else:
+            bytes_data = ET.tostring(data, encoding="utf8")
+            self.headers['Content-Length'] = str(len(bytes_data))
+            self.data = bytes_data
+        self.files = None
+
+    def set_json_body(self, data):
+        """Set a JSON-friendly object as the body of the request."""
+        if data is None:
+            self.data = None
+        else:
+            self.data = json.dumps(data)
+            self.headers['Content-Length'] = str(len(self.data))
+        self.files = None
+
+    def set_multipart_body(self, data=None):
+        """Set form-encoded data as the body of the request."""
+        if data is None:
+            data = {}
         content_type = self.headers.pop('Content-Type', None) if self.headers else None
 
         if content_type and content_type.lower() == 'application/x-www-form-urlencoded':
-            # Do NOT use "add_content" that assumes input is JSON
-            self.data = {f: d for f, d in content.items() if d is not None}
+            self.data = {f: d for f, d in data.items() if d is not None}
+            self.files = None
         else: # Assume "multipart/form-data"
-            self.files = {f: self._format_data(d) for f, d in content.items() if d is not None}
+            self.files = {f: self._format_data(d) for f, d in data.items() if d is not None}
+            self.data = None
+
+    def set_bytes_body(self, data):
+        """Set generic bytes as the body of the request."""
+        if data:
+            self.headers['Content-Length'] = str(len(data))
+        self.data = data
+        self.files = None
 
 
 class _HttpResponseBase(object):
@@ -246,12 +216,6 @@ class _HttpResponseBase(object):
          Implementation can be smarter if they want (using headers).
         """
         return self.body().decode(encoding or "utf-8")
-
-    def raise_for_status(self):
-        """Raise for status. Should be overriden, but basic implementation provided.
-        """
-        if self.status_code >= 400:
-            raise ClientRequestError("Received status code {}".format(self.status_code))
 
 
 class HttpResponse(_HttpResponseBase):

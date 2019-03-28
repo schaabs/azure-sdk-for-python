@@ -32,7 +32,8 @@ from .universal import (
     HeadersPolicy,
     UserAgentPolicy,
     NetworkTraceLoggingPolicy,
-    ContentDecodePolicy
+    ContentDecodePolicy,
+    ProxyPolicy
 )
 
 __all__ = [
@@ -44,17 +45,20 @@ __all__ = [
     'NetworkTraceLoggingPolicy',
     'ContentDecodePolicy',
     'RetryPolicy',
-    'RedirectPolicy'
+    'RedirectPolicy',
+    'ProxyPolicy'
 ]
 
 try:
     from .base_async import AsyncHTTPPolicy
     from .credentials_async import AsyncCredentialsPolicy
-    #from redirect_async import AsyncRedirectPolicy
-    #from retry_async import AsyncRetryPolicy
+    from .redirect_async import AsyncRedirectPolicy
+    from .retry_async import AsyncRetryPolicy
     __all__.extend([
         'AsyncHTTPPolicy',
         'AsyncCredentialsPolicy',
+        'AsyncRedirectPolicy',
+        'AsyncRetryPolicy'
     ])
 except (ImportError, SyntaxError):
     pass  # Async not supported

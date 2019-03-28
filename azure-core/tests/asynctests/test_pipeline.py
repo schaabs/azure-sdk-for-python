@@ -27,7 +27,7 @@ import sys
 
 from azure.core.configuration import Configuration
 from azure.core.pipeline import AsyncPipeline
-from azure.core.pipeline.policies import SansIOHTTPPolicy, UserAgentPolicy
+from azure.core.pipeline.policies import SansIOHTTPPolicy, UserAgentPolicy, AsyncRedirectPolicy
 from azure.core.pipeline.transport import (
     AsyncHttpTransport,
     HttpRequest,
@@ -73,7 +73,8 @@ async def test_basic_aiohttp():
     conf = Configuration()
     request = HttpRequest("GET", "http://bing.com")
     policies = [
-        UserAgentPolicy("myusergant")
+        UserAgentPolicy("myusergant"),
+        AsyncRedirectPolicy()
     ]
     async with AsyncPipeline(AioHttpTransport(conf), policies=policies) as pipeline:
         response = await pipeline.run(request)
@@ -86,7 +87,8 @@ async def test_basic_async_requests():
 
     request = HttpRequest("GET", "http://bing.com")
     policies = [
-        UserAgentPolicy("myusergant")
+        UserAgentPolicy("myusergant"),
+        AsyncRedirectPolicy()
     ]
     async with AsyncPipeline(AsyncioRequestsTransport(), policies=policies) as pipeline:
         response = await pipeline.run(request)
@@ -99,7 +101,8 @@ async def test_conf_async_requests():
     conf = Configuration()
     request = HttpRequest("GET", "http://bing.com/")
     policies = [
-        UserAgentPolicy("myusergant")
+        UserAgentPolicy("myusergant"),
+        AsyncRedirectPolicy()
     ]
     async with AsyncPipeline(AsyncioRequestsTransport(conf), policies=policies) as pipeline:
         response = await pipeline.run(request)
@@ -112,7 +115,8 @@ def test_conf_async_trio_requests():
         conf = Configuration()
         request = HttpRequest("GET", "http://bing.com/")
         policies = [
-            UserAgentPolicy("myusergant")
+            UserAgentPolicy("myusergant"),
+            AsyncRedirectPolicy()
         ]
         async with AsyncPipeline(TrioRequestsTransport(conf), policies=policies) as pipeline:
             return await pipeline.run(request)

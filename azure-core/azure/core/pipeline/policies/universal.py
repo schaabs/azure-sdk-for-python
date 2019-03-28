@@ -36,17 +36,15 @@ import threading
 from typing import TYPE_CHECKING, cast, List, Callable, Iterator, Any, Union, Dict, Optional  # pylint: disable=unused-import
 import xml.etree.ElementTree as ET
 import warnings
+import types
+import re
 
 from azure.core import __version__  as azcore_version
 from .base import HTTPPolicy, SansIOHTTPPolicy
 from urllib3 import Retry  # Needs requests 2.16 at least to be safe
 
 from azure.core.exceptions import (
-    DeserializationError,
-    TokenExpiredError,
-    TokenInvalidError,
-    AuthenticationError,
-    ClientRequestError,
+    DecodeError,
     raise_with_traceback
 )
 
@@ -58,16 +56,28 @@ class HeadersPolicy(SansIOHTTPPolicy):
     """A simple policy that sends the given headers
     with the request.
 
-    This overwrite any headers already defined in the request.
+    This will overwrite any headers already defined in the request.
     """
-    def __init__(self, headers, **kwargs):
+    def __init__(self, base_headers=None, **kwargs):
         # type: (Mapping[str, str]) -> None
-        self.headers = headers or {}
+        self._headers = base_headers or {}
+        self._headers.update(kwargs.pop('headers', {}))
+
+    @property
+    def headers(self):
+        """The current headers collection."""
+        return self._headers
+
+    def add_header(self, key, value):
+        """Add a header to the configuration to be applied to all requests."""
+        self._headers[key] = value
 
     def on_request(self, request, **kwargs):
         # type: (PipelineRequest, Any) -> None
+        additional_headers = kwargs.pop('headers', {})
         http_request = request.http_request
         http_request.headers.update(self.headers)
+        http_request.headers.update(additional_headers)
 
 
 class UserAgentPolicy(SansIOHTTPPolicy):
@@ -87,8 +97,6 @@ class UserAgentPolicy(SansIOHTTPPolicy):
             )
         else:
             self._user_agent = base_user_agent
-        
-        # TODO: Confirm whether overwrite was for customers or services.
 
     @property
     def user_agent(self):
@@ -111,7 +119,15 @@ class UserAgentPolicy(SansIOHTTPPolicy):
     def on_request(self, request, **kwargs):
         # type: (PipelineRequest, Any) -> None
         http_request = request.http_request
-        if self.overwrite or self._USERAGENT not in http_request.headers:
+        if 'user_agent' in kwargs:
+            user_agent = kwargs.pop('user_agent')
+            if kwargs.pop('user_agent_overwrite', self.overwrite):
+                http_request.headers[self._USERAGENT] = user_agent
+            else:
+                user_agent = "{} {}".format(self.user_agent, user_agent)
+                http_request.headers[self._USERAGENT] = user_agent
+
+        elif self.overwrite or self._USERAGENT not in http_request.headers:
             http_request.headers[self._USERAGENT] = self.user_agent
 
 
@@ -126,7 +142,7 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
     def on_request(self, request, **kwargs):
         # type: (PipelineRequest, Any) -> None
         http_request = request.http_request
-        if kwargs.get("enable_http_logger", self.enable_http_logger):
+        if kwargs.get("logging_enable", self.enable_http_logger):
             if not _LOGGER.isEnabledFor(logging.DEBUG):
                 return
 
@@ -150,7 +166,7 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
 
     def on_response(self, request, response, **kwargs):
         # type: (PipelineRequest, PipelineResponse, Any) -> None
-        if kwargs.get("enable_http_logger", self.enable_http_logger):
+        if kwargs.get("logging_enable", self.enable_http_logger):
             if not _LOGGER.isEnabledFor(logging.DEBUG):
                 return
 
@@ -220,7 +236,7 @@ class ContentDecodePolicy(SansIOHTTPPolicy):
             try:
                 return json.loads(data_as_str)
             except ValueError as err:
-                raise DeserializationError("JSON is invalid: {}".format(err), err)
+                raise DecodeError("JSON is invalid: {}".format(err), error=err)
         elif "xml" in (content_type or []):
             try:
                 return ET.fromstring(data_as_str)
@@ -242,8 +258,8 @@ class ContentDecodePolicy(SansIOHTTPPolicy):
                 # The function hack is because Py2.7 messes up with exception
                 # context otherwise.
                 _LOGGER.critical("Wasn't XML not JSON, failing")
-                raise_with_traceback(DeserializationError, "XML is invalid")
-        raise DeserializationError("Cannot deserialize content-type: {}".format(content_type))
+                raise_with_traceback(DecodeError, "XML is invalid")
+        raise DecodeError("Cannot deserialize content-type: {}".format(content_type))
 
     @classmethod
     def deserialize_from_http_generics(cls, body_bytes, headers):

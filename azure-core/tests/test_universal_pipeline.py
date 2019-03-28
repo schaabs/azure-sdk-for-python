@@ -32,7 +32,7 @@ import requests
 
 import pytest
 
-from azure.core.exceptions import DeserializationError
+from azure.core.exceptions import DecodeError
 from azure.core.configuration import Configuration
 from azure.core.pipeline import (
     PipelineResponse,
@@ -75,16 +75,17 @@ def test_no_log(mock_http_logger):
     mock_http_logger.reset_mock()
 
     # I can enable it per request
-    http_logger.on_request(request, **{"enable_http_logger": True})
+    http_logger.on_request(request, **{"logging_enable": True})
     assert mock_http_logger.debug.call_count >= 1
-    http_logger.on_response(request, response, **{"enable_http_logger": True})
+    mock_http_logger.reset_mock()
+    http_logger.on_response(request, response, **{"logging_enable": True})
     assert mock_http_logger.debug.call_count >= 1
     mock_http_logger.reset_mock()
 
     # I can enable it per request (bool value should be honored)
-    http_logger.on_request(request, **{"enable_http_logger": False})
+    http_logger.on_request(request, **{"logging_enable": False})
     mock_http_logger.debug.assert_not_called()
-    http_logger.on_response(request, response, **{"enable_http_logger": False})
+    http_logger.on_response(request, response, **{"logging_enable": False})
     mock_http_logger.debug.assert_not_called()
     mock_http_logger.reset_mock()
 
@@ -98,9 +99,9 @@ def test_no_log(mock_http_logger):
 
     # I can enable it globally and override it locally
     http_logger.enable_http_logger = True
-    http_logger.on_request(request, **{"enable_http_logger": False})
+    http_logger.on_request(request, **{"logging_enable": False})
     mock_http_logger.debug.assert_not_called()
-    http_logger.on_response(request, response, **{"enable_http_logger": False})
+    http_logger.on_response(request, response, **{"logging_enable": False})
     mock_http_logger.debug.assert_not_called()
     mock_http_logger.reset_mock()
 
@@ -132,10 +133,10 @@ def test_raw_deserializer():
     assert result["ugly"] is True
 
     # Be sure I catch the correct exception if it's neither XML nor JSON
-    with pytest.raises(DeserializationError):
+    with pytest.raises(DecodeError):
         response = build_response(b'gibberish', content_type="application/xml")
         raw_deserializer.on_response(None, response, stream=False)
-    with pytest.raises(DeserializationError):
+    with pytest.raises(DecodeError):
         response = build_response(b'{{gibberish}}', content_type="application/xml")
         raw_deserializer.on_response(None, response, stream=False)
 
