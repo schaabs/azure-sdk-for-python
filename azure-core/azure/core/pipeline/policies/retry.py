@@ -51,7 +51,7 @@ class RetryPolicy(HTTPPolicy):
     """A retry policy.
     
     :param retry_total: Total number of retries to allow. Takes precedence over other counts.
-     Default value is 10.
+     Default value is 0.
     :param retry_connect: How many connection-related errors to retry on.
      These are errors raised before the request is sent to the remote server,
      which we assume has not triggered the server to process the request. Default value is 3
@@ -71,7 +71,7 @@ class RetryPolicy(HTTPPolicy):
     BACKOFF_MAX = 120
 
     def __init__(self, **kwargs):
-        self.total_retries = kwargs.pop('retry_total', 10)
+        self.total_retries = kwargs.pop('retry_total', 0)
         self.connect_retries = kwargs.pop('retry_connect', 3)
         self.read_retries = kwargs.pop('retry_read', 3)
         self.status_retries = kwargs.pop('retry_status', 3)
